@@ -1,0 +1,41 @@
+{
+  "name": "catest",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.11.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "@vx/vx": "0.0.199",
+    "d3": "^6.2.0",
+    "d3-collection": "^1.0.7",
+    "plotly.js": "^1.57.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-map-gl": "^5.2.9",
+    "react-plotly.js": "^2.5.0",
+    "react-scripts": "3.4.4"
+  },
+  "scripts": {
+    "start": "react-scripts --max_old_space_size=4096 start",
+    "build": "react-scripts --max_old_space_size=4096 build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

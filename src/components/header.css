@@ -1,0 +1,15 @@
+.header {
+    height: 10%;
+    background-color: #62a5e7; 
+}
+
+.header_image {
+    max-height: 70px;
+    margin: 10px;
+}
+
+.header_text{
+    margin: 20px;
+    color: white;
+}
+

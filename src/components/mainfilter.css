@@ -1,0 +1,46 @@
+.marker-btn{
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.marker-btn img{
+    width: 10px;
+    height: 10px;
+}
+
+.popuptext{
+    font-size: 10px;
+}
+
+
+/* table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+tr.noBorder td {
+    border: 0;
+}
+td.center {
+    text-align: center; 
+    vertical-align: middle;
+} */
+
+/* .rectmarker{
+    height: 15px;
+    width: 15px;
+    background-color: red;
+    border-style: solid;
+    border-width: thin;
+    cursor: pointer;
+}
+
+.circmarker{
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    background-color: red;
+    border-style: solid;
+    border-width: thin;  
+    cursor: pointer;
+} */
