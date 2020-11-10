@@ -47,6 +47,8 @@ function Mainfilter() {
 
     const [selectedStationData, setSelectedStationData] = useState([]);
 
+    // const [selectedStationHM, setSelectedStationHM] = useState(selectedStation[0]);
+
 
     // keep track of maps state
     const [viewport, setViewPort] = useState({
@@ -222,7 +224,6 @@ function Mainfilter() {
 
     // function to clear all canvas
     const clearCanvas = () => {
-        // sethoverStationProps([]);
         setSelectedStation([]); // set selectedStation to Null
         setSelectedStationData([]);
         setSelectedYear([0,0]); // set selectedYear to Null
@@ -242,69 +243,54 @@ function Mainfilter() {
                 setStationData(data[0]);
                 console.log("stationdata", data[0]);
 
-                // // #################################################################### FOR TESTING ONLY. DELETE LATER
-                // setSelectedModels(["ModelA", "ModelB", "ModelC"]);  //
-                // setSelectedYear([1979, 2019]);
-                // setSelectedStation(["9423350", "10252100"]); //, 9423350, 10253100
+                // #################################################################### FOR TESTING ONLY. DELETE LATER
+                setSelectedModels(["ModelA", "ModelB", "ModelC"]);  //
+                setSelectedYear([1979, 2019]);
+                setSelectedStation(["9423350", "10252100"]); //, 9423350, 10253100
 
-                // // preprocess only once
-                // function rowConverterPrediction(d){
-                //     return {
-                //         date: new Date(d.ds.split('-')[0], d.ds.split('-')[1] - 1, d.ds.split('-')[2]),
-                //         model: d.index,
-                //         yhat: +d.yhat
-                //     }
-                // }
-                // function rowConverterTruth(d){
-                //     return {
-                //         date: new Date(d.Date.split('-')[0], d.Date.split('-')[1] - 1, d.Date.split('-')[2]),
-                //         y: +d.Streamflow
-                //     }
-                // }
+                // preprocess only once
+                function rowConverterPrediction(d){
+                    return {
+                        date: new Date(d.ds.split('-')[0], d.ds.split('-')[1] - 1, d.ds.split('-')[2]),
+                        model: d.index,
+                        yhat: +d.yhat
+                    }
+                }
+                function rowConverterTruth(d){
+                    return {
+                        date: new Date(d.Date.split('-')[0], d.Date.split('-')[1] - 1, d.Date.split('-')[2]),
+                        y: +d.Streamflow
+                    }
+                }
 
-                // var files = [];
-                // files.push(d3.csv('./data/prediction'+9423350+'.csv'));
-                // files.push(d3.csv('./data/'+9423350+'.csv'));
-                // files.push(d3.csv('./data/prediction'+10251300+'.csv'));
-                // files.push(d3.csv('./data/'+10251300+'.csv'));
+                var files = [];
+                files.push(d3.csv('./data/prediction'+9423350+'.csv'));
+                files.push(d3.csv('./data/'+9423350+'.csv'));
+                files.push(d3.csv('./data/prediction'+10251300+'.csv'));
+                files.push(d3.csv('./data/'+10251300+'.csv'));
 
-                // // files.push(d3.csv('./data/prediction'+9423350+'.csv'));
-                // // files.push(d3.csv('./data/'+9423350+'.csv'));
-                // // files.push(d3.csv('./data/prediction'+10251300+'.csv'));
-                // // files.push(d3.csv('./data/'+10251300+'.csv'));
+                Promise.all(files)
+                .then(
+                    function(read_files) {
+                        var testingarr = []
+                        // convert row to correct data type
+                        var prediction = read_files[0].map(x => rowConverterPrediction(x));
+                        var groundTruth = read_files[1].map(x => rowConverterTruth(x));
+                        var temppp = [prediction, groundTruth, 9423350];
+                        testingarr.push(temppp);
 
-                // Promise.all(files)
-                // .then(
-                //     function(read_files) {
-                //         var testingarr = []
-                //         // convert row to correct data type
-                //         var prediction = read_files[0].map(x => rowConverterPrediction(x));
-                //         var groundTruth = read_files[1].map(x => rowConverterTruth(x));
-                //         var temppp = [prediction, groundTruth, 9423350];
-                //         testingarr.push(temppp);
+                        prediction = read_files[2].map(x => rowConverterPrediction(x));
+                        groundTruth = read_files[3].map(x => rowConverterTruth(x));
+                        temppp = [prediction, groundTruth, 10253100];
+                        testingarr.push(temppp);
 
-                //         prediction = read_files[2].map(x => rowConverterPrediction(x));
-                //         groundTruth = read_files[3].map(x => rowConverterTruth(x));
-                //         temppp = [prediction, groundTruth, 10253100];
-                //         testingarr.push(temppp);
-
-                //         // prediction = read_files[4].map(x => rowConverterPrediction(x));
-                //         // groundTruth = read_files[5].map(x => rowConverterTruth(x));
-                //         // temppp = [prediction, groundTruth, 9423350];
-                //         // testingarr.push(temppp);
-
-                //         // prediction = read_files[6].map(x => rowConverterPrediction(x));
-                //         // groundTruth = read_files[7].map(x => rowConverterTruth(x));
-                //         // temppp = [prediction, groundTruth, 10253100];
-                //         // testingarr.push(temppp);
-
-                //         setSelectedStationData(testingarr);
-                //     }
-                // ).catch(function(e) {
-                //     console.log(e);
-                //     // catch any no files
-                //     console.error('File ../data/prediction'+9423350+'.csv not found!');
-                // });
+                        setSelectedStationData(testingarr);
+                    }
+                ).catch(function(e) {
+                    console.log(e);
+                    // catch any no files
+                    console.error('File ../data/prediction'+9423350+'.csv not found!');
+                });
             }
         );
 
@@ -434,7 +420,7 @@ function Mainfilter() {
             <div style={{display: "flex", alignItems: "center", margin: "10px"}}>
                 <Grid container spacing={0}>
                     <Grid item xs={12} sm={7} md={7}>
-                        <ReactMapGL {...viewport}
+                        {/* <ReactMapGL {...viewport}
                             mapboxApiAccessToken={mapboxapitoken}
                             onViewportChange={(viewport) => { changeviewport(viewport);}}
                             mapStyle="mapbox://styles/jsantoso2/ckgsqipgq1tzg19mlxmrcub3c"
@@ -477,8 +463,8 @@ function Mainfilter() {
                                     </div>
                                 </Popup>
                             ) : null }
-                        </ReactMapGL>
-                        {/* <div style={{height: "75vh", width: "50vw", backgroundColor: "black"}}></div> */}
+                        </ReactMapGL> */}
+                        <div style={{height: "75vh", width: "50vw", backgroundColor: "black"}}></div>
                     </Grid>
                     <Grid item xs={12} sm={5} md={5}>
                         <div style={{borderStyle: "solid", height: "75vh"}}>
@@ -569,11 +555,21 @@ function Mainfilter() {
                 <LinechartMultiple key={"lcmultiple"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} displayModel={displayModel}/>
             : null}
 
+            {/* <FormControl>
+                <InputLabel shrink>Display HeatMap: </InputLabel>
+                <NativeSelect onChange={(e) => setSelectedStationHM(e.target.value)}>
+                    {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
+                </NativeSelect>
+            </FormControl> */}
             {(selectedStationData.length > 0)?
-                <Heatmap key={"hm"+selectedStationData[0][2]} oneselectedStation={selectedStationData[0][2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/>
-                // selectedStationData.map(x => 
-                //     <Heatmap key={"hm"+x[2]} oneselectedStation={x[2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={x[0]} groundTruth={x[1]}/>
-                // )
+                // <Heatmap key={"hm"+selectedStationHM} oneselectedStation={selectedStationHM} selectedModels={selectedModels} selectedYear={selectedYear} prediction={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0]} groundTruth={selectedStationData.filter(x => +x[2] === +selectedStationHM)[1]}/>
+                <Grid container spacing={0}>
+                    {selectedStationData.map(x => 
+                        <Grid key={"grid"+x[2]} item xs={12} sm={6} md={5} style={{marginRight: "20px"}}>
+                            <Heatmap key={"hm"+x[2]} oneselectedStation={x[2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={x[0]} groundTruth={x[1]}/>
+                        </Grid>
+                    )}
+                </Grid>
             : null}
             
 

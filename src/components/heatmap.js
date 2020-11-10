@@ -1,19 +1,19 @@
 import React, {useRef, useState, useEffect} from 'react';
 import * as d3 from 'd3';
 import * as d3Collection from 'd3-collection';
-import { FormControl, FormHelperText, NativeSelect, InputLabel } from '@material-ui/core';
-import { text } from 'd3';
-
+import { FormControl, NativeSelect, InputLabel } from '@material-ui/core';
+import d3Tip from "d3-tip";
+import { legendColor } from 'd3-svg-legend';
 
 function Heatmap(props) {
 
     const svgRef = useRef();
+    const legendRef = useRef();
 
     // constants for svg properties
     const height = 500;
     const width = 500;
     const padding = 40;
-    const sizeCells = 3;
 
     // passed properties
     var oneselectedStation = props.oneselectedStation;
@@ -81,17 +81,19 @@ function Heatmap(props) {
     useEffect(() => {
         // d3 code
         const svg = d3.select(svgRef.current);
+        const legendsvg = d3.select(legendRef.current);
 
         if (typeof prediction !== "undefined" && typeof groundTruth !== "undefined"){
             svg.selectAll(".matrixsq").remove();
             svg.selectAll(".xlabel").remove();
-            
+            svg.selectAll(".ylabel").remove();
+            svg.selectAll(".tooltiphm").remove();
+
             var xdata = [];
             var ydata = [];
             // DATA filtering
             // xdata
             if (selectedX === "Actual"){
-                //console.log("selecteeXYear", selectedXYear);
                 xdata = groundTruth.filter(x => x.date.getFullYear() === +selectedXYear);
             } else {
                 xdata = prediction.filter(x => x.date.getFullYear() === +selectedXYear && x.model === selectedX);
@@ -160,21 +162,24 @@ function Heatmap(props) {
                                 .entries(ydata);
             }
     
-            // console.log("xdata", xdata);
-            // console.log("ydata", ydata);
+            var imapx = new Map();
+            var imapy = new Map();
 
             // double for loop for iteration
             var matrixdata = [];
             xdata.forEach((x, i) => {
                 ydata.forEach((y, i2) => {
-                    matrixdata.push({ix: i, iy: i2, valx: +x.key, valy: +y.key, value: x.value - y.value})
+                    imapx[i] = +x.key;
+                    imapy[i2] = +y.key;
+                    matrixdata.push({ix: i, iy: i2, valx: +x.key, valy: +y.key, value: x.value - y.value});
+
                 })
             }); 
-
-            // console.log("matrixdata", matrixdata);
             
             var xdomain = matrixdata.map(x => x.ix);
             var ydomain = matrixdata.map(x => x.iy);
+            xdomain = [...new Set(xdomain)];
+            ydomain = [...new Set(ydomain)];
 
             // BuildScales:
             var xScale = d3.scaleBand()
@@ -183,11 +188,29 @@ function Heatmap(props) {
             
             var yScale = d3.scaleBand()
                             .domain(ydomain)
-                            .range([height-padding, padding]);
+                            .range([padding, height-padding]);
             
             var colorscale = d3.scaleLinear()
                                .domain([0, d3.max(matrixdata, function(d){ return Math.abs(d.value); })])
                                .range(["white", "blue"]);
+
+            // tooltip
+            var tip = d3Tip()
+                        .attr("visible", "visible")
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                            if (aggregation === "Week"){
+                                return "<strong style='color:white'>Week</strong> <span style='color:white'>" + d3.select(this).attr("valx") + " vs " + d3.select(this).attr("valy") + "</span>"
+                                + "<br/>" + "<span style='color:white'>Value: "  + Math.round(d3.select(this).attr("value"));
+                            } else {
+                                return "<strong style='color:white'>Month</strong> <span style='color:white'>" + d3.select(this).attr("valx") + " vs " + d3.select(this).attr("valy") + "</span>"
+                                + "<br/>" + "<span style='color:white'>Value: "  + Math.round(d3.select(this).attr("value"));
+                            }
+                          
+                        })
+                        .style("background-color", "black");
+
 
             // add the squares
             svg.selectAll(".matrixsq")
@@ -198,16 +221,49 @@ function Heatmap(props) {
                 .attr("y", function(d){ return yScale(d.iy)})
                 .attr("width", xScale.bandwidth())
                 .attr("height", yScale.bandwidth())
-                .style("fill", function(d) { return colorscale(d.value)})
-                .attr("class", "matrixsq");
+                .style("fill", function(d) { return colorscale(Math.abs(d.value))})
+                .attr("valx", function(d){ return d.valx})
+                .attr("valy", function(d){ return d.valy})
+                .attr("value", function(d) { return d.value})
+                .attr("class", "matrixsq")
+                .on("mouseover", tip.show)
+                .on("mouseleave", tip.hide);
+            
+            svg.call(tip);
 
+            // labels
+            var uniqx = xdomain.map(x => { return {ix: x, valx: imapx[x]}});
+            var uniqy = ydomain.map(x => { return {iy: x, valy: imapy[x]}});
             svg.selectAll(".xlabel")
-                .data(matrixdata)
-                .append("text")
-                .attr("x", function(d){ return xScale(d.ix); })
-                .attr("y", 100)
-                .text(function(d){ return d.valx})
-                .attr("class", "xlabel");
+                .data(uniqx)
+                .join(
+                    enter => enter.append("text").attr("font-size", "8px").attr("x", function(d){ return xScale(d.ix) + xScale.bandwidth()/2})
+                                .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d.valx}).attr("text-anchor", "middle"),
+                    update => update.append("text").attr("font-size", "8px").attr("x", function(d){ return xScale(d.ix) + xScale.bandwidth()/2})
+                                .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d.valx}).attr("text-anchor", "middle"),
+                    exit => exit.remove()
+                ); 
+            
+            svg.selectAll(".ylabel")
+                .data(uniqy)
+                .join(
+                    enter => enter.append("text").attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
+                                .attr("y", function(d){ return yScale(d.iy) + yScale.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d.valy}),
+                    update => update.append("text").attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
+                              .attr("y", function(d){ return yScale(d.iy) + yScale.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d.valy}),
+                    exit => exit.remove()
+                ); 
+            
+            var legendLinear = legendColor()
+                .labelFormat(d3.format(".0f"))
+                .shapeWidth(30)
+                .cells(20)
+                .orient('vertical')
+                .scale(colorscale);
+              
+            legendsvg.select(".legendLinear")
+                .attr("transform", "translate(0," + (padding/2) + ")")
+                .call(legendLinear)
         }
 
     }, [oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, selectedXYear, selectedYYear, aggregation]);
@@ -252,43 +308,52 @@ function Heatmap(props) {
 
 
     return (
-        <div>
-            <FormControl>
-                <InputLabel shrink>Aggregation: </InputLabel>
-                <NativeSelect onChange={(e) => setAggregation(e.target.value)}>
-                    {aggregationdata.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <p>XAxis</p>
-            <FormControl>
-                <InputLabel shrink>Model: </InputLabel>
-                <NativeSelect onChange={(e) => handleSelectedX(e)}>
-                    {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <FormControl>
-                <InputLabel shrink>Year: </InputLabel>
-                <NativeSelect onChange={(e) => setSelectedXYear(e.target.value)} value={selectedXYear}>
-                    {selectedXList.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <p>YAxis</p>
-            <FormControl>
-                <InputLabel shrink>Model: </InputLabel>
-                <NativeSelect onChange={(e) => handleSelectedY(e)}>
-                    {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <FormControl>
-                <InputLabel shrink>Year: </InputLabel>
-                <NativeSelect onChange={(e) => setSelectedYYear(e.target.value)} value={selectedYYear}>
-                    {selectedYList.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <svg ref={svgRef} width = {width} height = {height}>
-                <g className="y-axis"></g>
-                <g className="x-axis"></g>
-            </svg>
+        <div style={{marginLeft: "20px"}}>
+            <div style={{display: "flex", alignItems: "center"}} >
+                <FormControl style={{marginRight: "2rem"}}>
+                    <InputLabel shrink>Aggregation: </InputLabel>
+                    <NativeSelect onChange={(e) => setAggregation(e.target.value)}>
+                        {aggregationdata.map(x => <option value={x} key={x}>{x}</option>)}
+                    </NativeSelect>
+                </FormControl>
+                <p style={{marginRight: "1rem"}}><b>XAxis: </b></p>
+                <FormControl>
+                    <InputLabel shrink>Model: </InputLabel>
+                    <NativeSelect onChange={(e) => handleSelectedX(e)}>
+                        {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
+                    </NativeSelect>
+                </FormControl>
+                <FormControl style={{marginRight: "2rem"}}>
+                    <InputLabel shrink>Year: </InputLabel>
+                    <NativeSelect onChange={(e) => setSelectedXYear(e.target.value)} value={selectedXYear}>
+                        {selectedXList.map(x => <option value={x} key={x}>{x}</option>)}
+                    </NativeSelect>
+                </FormControl>
+                <p style={{marginRight: "1rem"}}><b>YAxis: </b></p>
+                <FormControl>
+                    <InputLabel shrink>Model: </InputLabel>
+                    <NativeSelect onChange={(e) => handleSelectedY(e)}>
+                        {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
+                    </NativeSelect>
+                </FormControl>
+                <FormControl>
+                    <InputLabel shrink>Year: </InputLabel>
+                    <NativeSelect onChange={(e) => setSelectedYYear(e.target.value)} value={selectedYYear}>
+                        {selectedYList.map(x => <option value={x} key={x}>{x}</option>)}
+                    </NativeSelect>
+                </FormControl>
+            </div>
+            <h2 style={{marginTop: "20px"}}>{"Heatmap for Station " + oneselectedStation}</h2>
+            <div style={{display: "flex", alignItems: "center"}}>
+                <svg ref={svgRef} width = {width} height = {height}>
+                    <g className="y-axis"></g>
+                    <g className="x-axis"></g>
+                </svg>
+                <svg ref={legendRef} width = {width / 5} height={height}>
+                    <text x="10" y="10" font-weight="700">Legend</text>
+                    <g className="legendLinear"></g>
+                </svg>
+            </div>
         </div>
     )
 }
