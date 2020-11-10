@@ -214,7 +214,6 @@ function LinechartMultiple(props) {
                 var tempcounter = 0
                 prediction.forEach((arr, idx) => {
                     selectedModels.forEach((model, idx2) => {
-                        console.log("arr", arr.filter(x => x.model === model));
                         svg.selectAll("#predline"+tempcounter)
                         .data([arr.filter(x => x.model === model)])
                         .join("path")
@@ -305,11 +304,9 @@ function LinechartMultiple(props) {
                         selectedModels.forEach((model, idx2) => {
                             var temparr = arr.filter(x => x.model === model);
                             temparr = temparr.filter(x => checkDateEquality(x.date, res.date));
-                            console.log("temparr", temparr);
                             if (temparr.length > 0){
                                 temparr.forEach((elem, idx3) => {
-                                    console.log("elem", elem);
-                                    tooltipstr = tooltipstr + selectedStation[idx3] + " " + model + ': ' + parseFloat(elem.yhat.toFixed(2)) + '\n'; 
+                                    tooltipstr = tooltipstr + selectedStation[idx] + " " + model + ': ' + parseFloat(elem.yhat.toFixed(2)) + '\n'; 
                                 })
                             }
                         })
@@ -518,7 +515,6 @@ function LinechartMultiple(props) {
                 var tempcounter = 0
                 prediction.forEach((arr, idx) => {
                     selectedModels.forEach((model, idx2) => {
-                        console.log("arr", arr.filter(x => x.model === model));
                         svgbrushchart.selectAll("#predline"+tempcounter)
                         .data([arr.filter(x => x.model === model)])
                         .join("path")
