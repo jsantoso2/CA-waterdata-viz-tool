@@ -30,12 +30,14 @@
 ### Charts
 1. Line Chart
 <img src="https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/linechart.JPG" width = 600 height=300/>
-    - Description: Line chart that display trends for all selected station, based on the selected year ranges. 
-    - Interaction: User can drag brush to zoom in/out on line chart, drag slider to see only 1 year, zoom in on line chart 
+
+- Description: Line chart that display trends for all selected station, based on the selected year ranges.
+- Interaction: User can drag brush to zoom in/out on line chart, drag slider to see only 1 year, zoom in on line chart
+
 2. Heatmap for Actual/Pred vs Actual/Pred for one year
-<img src="https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/heatmap.JPG" width = 400 height=400/>
-    - Description: Heatmap where users can see how weeks/months prediction compare to one another
-    - Interaction: tooltip on hover, dynamically changing axis and aggregation
+<img src="https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/heatmap.JPG" width = 600 height=300/>
+- Description: Heatmap where users can see how weeks/months prediction compare to one another 
+- Interaction: tooltip on hover, dynamically changing axis and aggregation 
 
 ### To Get Started with React
 ```
