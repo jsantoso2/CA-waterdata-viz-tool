@@ -132,6 +132,8 @@ function LinechartMultiple(props) {
                         .tickFormat(function(d){
                             if (typeof tempgt === "undefined"){ 
                                 return d3.timeFormat("%b %Y")(d); 
+                            } else if (typeof tempgt[0] === "undefined"){
+                                return d3.timeFormat("%b %Y")(d);
                             }
                             if (tempgt[0].length < 465){
                                 return d3.timeFormat("%d %b %Y")(d)
@@ -226,6 +228,30 @@ function LinechartMultiple(props) {
                 })
             }
             
+            // get longest sequence of array and add the maximum length
+            var groundTruthCopy = [...groundTruth];
+            var longestseq = groundTruthCopy.map(x => x.length);
+            longestseq = longestseq.indexOf(Math.max(...longestseq)); // index of longest value in sequence gt
+            groundTruthCopy = groundTruthCopy[longestseq];
+            var lastdate = prediction.map(osd => osd.map(x => x.date)).flat();
+            lastdate = [...new Set([...lastdate])];
+            lastdate = new Date(Math.max.apply(null,lastdate));
+            if (groundTruthCopy.length > 0){
+                if (+lastdate > +groundTruthCopy.slice(-1)[0].date){
+                    lastdate = lastdate;
+                } else {
+                    lastdate = groundTruthCopy.slice(-1)[0].date;
+                }
+                // add into master sequence
+                function getDaysArray (start, end) {
+                    for(var dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
+                        groundTruthCopy.push({date: new Date(dt), y: -999});
+                    }
+                };
+                getDaysArray(groundTruthCopy.slice(-1)[0].date, lastdate);
+            }
+          
+
             const callout = (g, value) => {
                 if (!value) return g.style("display", "none");
                 g.style("display", null)
@@ -260,12 +286,12 @@ function LinechartMultiple(props) {
                 const bisect = d3.bisector(d => d.date).left;
                 const date = xScale.invert(mx);
 
-                var longestseq = groundTruth.map(x => x.length);
-                longestseq = longestseq.indexOf(Math.max(...longestseq)); // index of longest value in sequence gt
-
-                const index = bisect(groundTruth[longestseq], date, 1); // quick fix for now
+                const index = bisect(groundTruthCopy, date, 1); 
+                const a = groundTruthCopy[index - 1]; 
+                var b = groundTruthCopy[index];
+                /*const index = bisect(groundTruth[longestseq], date, 1); // quick fix for now
                 const a = groundTruth[longestseq][index - 1]; // quick fix for now
-                var b = groundTruth[longestseq][index];   // quick fix for now
+                var b = groundTruth[longestseq][index];   // quick fix for now*/
                 if (typeof b === "undefined"){
                     b = a;
                 }
@@ -285,7 +311,7 @@ function LinechartMultiple(props) {
                 var tooltipstr = '';
                 // add actual data
                 filteredgt.forEach((elem, idx) => {
-                    if (elem.length > 0){
+                    if (elem.length > 0 && +elem[0].y !== -999){
                         tooltipstr = tooltipstr + selectedStation[idx] + ': ' + parseFloat(elem[0].y.toFixed(2)) + '\n'; 
                     }
                 }) 
@@ -605,7 +631,6 @@ function LinechartMultiple(props) {
         .select(".brush")
         .call(brush)
         .call(brush.move, startenddatepixels);
-
     }
 
     return (

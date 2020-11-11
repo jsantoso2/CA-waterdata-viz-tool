@@ -350,7 +350,7 @@ function Heatmap(props) {
                     <g className="x-axis"></g>
                 </svg>
                 <svg ref={legendRef} width = {width / 5} height={height}>
-                    <text x="10" y="10" font-weight="700">Legend</text>
+                    <text x="10" y="10" fontWeight="700">Legend</text>
                     <g className="legendLinear"></g>
                 </svg>
             </div>

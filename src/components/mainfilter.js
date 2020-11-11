@@ -71,7 +71,6 @@ function Mainfilter() {
             unclickMarker(currStation);
         } else {
             // here do operations for clicks
-
             // read prediction files
             var files = [];
             files.push(d3.csv('./data/prediction'+currStation+'.csv'));
@@ -118,6 +117,7 @@ function Mainfilter() {
                             appendneeded = false;
                         }
                     }
+
                     
                     // if need to append
                     if (appendneeded){
@@ -135,10 +135,10 @@ function Mainfilter() {
 
                         var yearsList = [...new Set([...allYears, ...yearsListpred, ...yearListactual])]; // get unique elements
                         yearsList = Array.from(yearsList).sort();
-                        
+
                         // set all year
                         setAllYears(yearsList);
-        
+
                         // set year as first element
                         setSelectedYear([yearsList[0], yearsList.slice(-1)[0]]);
         
@@ -246,7 +246,7 @@ function Mainfilter() {
                 // #################################################################### FOR TESTING ONLY. DELETE LATER
                 setSelectedModels(["ModelA", "ModelB", "ModelC"]);  //
                 setSelectedYear([1979, 2019]);
-                setSelectedStation(["9423350", "10252100"]); //, 9423350, 10253100
+                setSelectedStation(["11195500", "1197250"]); 
 
                 // preprocess only once
                 function rowConverterPrediction(d){
@@ -264,24 +264,25 @@ function Mainfilter() {
                 }
 
                 var files = [];
-                files.push(d3.csv('./data/prediction'+9423350+'.csv'));
-                files.push(d3.csv('./data/'+9423350+'.csv'));
-                files.push(d3.csv('./data/prediction'+10251300+'.csv'));
-                files.push(d3.csv('./data/'+10251300+'.csv'));
+                files.push(d3.csv('./data/prediction'+11195500+'.csv'));
+                files.push(d3.csv('./data/'+11195500+'.csv'));
+                files.push(d3.csv('./data/prediction'+11197250+'.csv'));
+                files.push(d3.csv('./data/'+11197250+'.csv')); 
 
                 Promise.all(files)
                 .then(
                     function(read_files) {
+                        console.log("read_files", read_files);
                         var testingarr = []
                         // convert row to correct data type
                         var prediction = read_files[0].map(x => rowConverterPrediction(x));
                         var groundTruth = read_files[1].map(x => rowConverterTruth(x));
-                        var temppp = [prediction, groundTruth, 9423350];
+                        var temppp = [prediction, groundTruth, 11195500];
                         testingarr.push(temppp);
 
                         prediction = read_files[2].map(x => rowConverterPrediction(x));
                         groundTruth = read_files[3].map(x => rowConverterTruth(x));
-                        temppp = [prediction, groundTruth, 10253100];
+                        temppp = [prediction, groundTruth, 11197250];
                         testingarr.push(temppp);
 
                         setSelectedStationData(testingarr);
@@ -289,7 +290,7 @@ function Mainfilter() {
                 ).catch(function(e) {
                     console.log(e);
                     // catch any no files
-                    console.error('File ../data/prediction'+9423350+'.csv not found!');
+                    console.error('File ../data/prediction'+11197250+'.csv not found!');
                 });
             }
         );
@@ -562,11 +563,10 @@ function Mainfilter() {
                 </NativeSelect>
             </FormControl> */}
             {(selectedStationData.length > 0)?
-                // <Heatmap key={"hm"+selectedStationHM} oneselectedStation={selectedStationHM} selectedModels={selectedModels} selectedYear={selectedYear} prediction={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0]} groundTruth={selectedStationData.filter(x => +x[2] === +selectedStationHM)[1]}/>
                 <Grid container spacing={0}>
                     {selectedStationData.map(x => 
                         <Grid key={"grid"+x[2]} item xs={12} sm={6} md={5} style={{marginRight: "20px"}}>
-                            <Heatmap key={"hm"+x[2]} oneselectedStation={x[2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={x[0]} groundTruth={x[1]}/>
+                             <Heatmap key={"hm"+x[2]} oneselectedStation={x[2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={x[0]} groundTruth={x[1]}/>
                         </Grid>
                     )}
                 </Grid>
@@ -577,15 +577,15 @@ function Mainfilter() {
             {(selectedStation.length > 0) && (selectedModels.length > 0) && (selectedStationData.length > 0)? 
             <div>
                 {/* I HARD CODED THE YEAR TO 2018 HEREEEE  and also only selected One Station*/}
-                <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2018} selectedModels={selectedModels}
+                {/* <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2019} selectedModels={selectedModels}
                                     coloringScheme={coloringScheme} mode={'avg'} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/>
-                <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2018} selectedModels={selectedModels}
+                <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2019} selectedModels={selectedModels}
                                     coloringScheme={coloringScheme} mode={'maj'} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/>
-                <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2018} selectedModels={selectedModels}
+                <LayoutMatricesMeanMajority selectedStation={selectedStation[0]} selectedYear={2019} selectedModels={selectedModels}
                                     coloringScheme={coloringScheme} mode={'div'} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/>
-                <LayoutMatricesRegular selectedStation={selectedStation[0]} selectedYear={2018} selectedModels={selectedModels}
+                <LayoutMatricesRegular selectedStation={selectedStation[0]} selectedYear={2019} selectedModels={selectedModels}
                                     coloringScheme={coloringScheme} accuracyOrdering={accuracyOrdering} localRangeValues={localRangeValues}
-                                    columnValue={columnValue} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/>
+                                    columnValue={columnValue} prediction={selectedStationData[0][0]} groundTruth={selectedStationData[0][1]}/> */}
             </div>
             : null
             }
