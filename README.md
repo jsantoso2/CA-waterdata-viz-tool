@@ -12,7 +12,7 @@
     |   ├── components
     |   |   ├── maincomponent.js (Second main file -> can place router here)
     |   |   ├── mainfilter.js (This is where all the code is for the home page)
-    |   |   ├── header.js (header compoenent)
+    |   |   ├── header.js (header component)
     |   |   ├── heatmap.js (heatmap component)
     |   |   ├── linechartmultiple.js (linechart compoenent - DONE)
     |   |   ├── stackedbar.js (Maybe not used)
@@ -27,17 +27,20 @@
 2. go to main folder (CA-waterdata-viz-tool)
 3. type npm start
 
+### Main Screen
+Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/mapinterface.JPG)
+- Users can click on one or multiple stations, select year from range (start and end year), select none/multiple models, select display method to be average (all model prediction are averaged and displayed only by one line) / all (individual models displayed by its own linechart) for linechart display
+
 ### Charts
 1. Line Chart
-<img src="https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/linechart.JPG" width = 600 height=300/>
-
-- Description: Line chart that display trends for all selected station, based on the selected year ranges.
-- Interaction: User can drag brush to zoom in/out on line chart, drag slider to see only 1 year, zoom in on line chart
+Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/linechart.JPG)
+- Description: Line chart that display trends for all selected station, based on the selected year ranges. Can display individual models/average for prediction.
+- Interaction: User can drag brush to zoom in/out on line chart, drag slider to see only 1 year, zoom in on line chart, hover to show tooltip and horizontal barchart.
 
 2. Heatmap for Actual/Pred vs Actual/Pred for one year
-<img src="https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/heatmap.JPG" width = 600 height=300/>
+Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/heatmap.JPG)
 - Description: Heatmap where users can see how weeks/months prediction compare to one another 
-- Interaction: tooltip on hover, dynamically changing axis and aggregation 
+- Interaction: tooltip on hover, dynamically changing axis and aggregation, click on box to display another heatmap with breakdown by day. 
 
 ### To Get Started with React
 ```
