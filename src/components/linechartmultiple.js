@@ -10,7 +10,8 @@ function LinechartMultiple(props) {
     const svgRef = useRef();
     const svgRefyAxis = useRef();
     const svgReflegend = useRef();
-    const svgbrushChart = useRef();
+    const svgRefbrushChart = useRef();
+    const svgRefhorizbc = useRef();
 
     // color for different models
     var color = ["blue", "pink", "red", "yellow", "green", "orange", "purple", "black", "black", "black", "black", "black", "black", "black"];
@@ -46,8 +47,8 @@ function LinechartMultiple(props) {
     }
 
     // constants for svg properties
-    const height = 400;
-    const width = 1000;
+    const height = 450;
+    const width = 900;
     const padding = 40;
     var formatTime = d3.timeFormat("%b %Y");
 
@@ -72,6 +73,7 @@ function LinechartMultiple(props) {
         const svg = d3.select(svgRef.current); 
         const svgyaxis = d3.select(svgRefyAxis.current); 
         const svglegend = d3.select(svgReflegend.current);
+        const svghorizbc = d3.select(svgRefhorizbc.current);
 
         // remove all predline from previous draws
         for (var i = 0; i< 100; i++){
@@ -88,12 +90,12 @@ function LinechartMultiple(props) {
             // scale
             const xScalebrush = d3.scaleTime()
                                 .domain([d3.min(gtylist) , d3.max(gtylist)])
-                                .range([0, width - 5]);
+                                .range([0, width]);
 
             const xScale = d3.scaleTime()
                             .domain([xScalebrush.invert(selection[0]), xScalebrush.invert(selection[1])])
                             //.domain([d3.min(groundTruth, function(d){ return d.date; }) , d3.max(groundTruth, function(d){ return d.date; }) ])
-                            .range([0, width - 5]);
+                            .range([0, width]);
             
             // initial y axis
             var tempgt = groundTruth.map(osd => osd.filter(x => x.date >= xScale.domain()[0] && x.date <= xScale.domain()[1])).flat().map(x => x.y);
@@ -107,7 +109,7 @@ function LinechartMultiple(props) {
             const yScale = d3.scaleLinear()
                              //.domain([0, Math.max(d3.max(groundTruth, function(d){ return d.y; }), d3.max(prediction, function(d){ return d.yhat; }))])
                              .domain([0, Math.max(d3.max(tempgt), d3.max(temppred))])
-                             .range([height - 2*padding, padding]);
+                             .range([height - 2.5*padding, padding]);
             
             // change y axis for zoom
             if (currentZoomState){
@@ -321,7 +323,7 @@ function LinechartMultiple(props) {
                     // add prediction data
                     filteredpred.forEach((elem, idx) => {
                         if (elem.length > 0){
-                            tooltipstr = tooltipstr + "Pred" + selectedStation[idx] + ': ' + parseFloat(elem[0].yhat.toFixed(2)) + '\n'; 
+                            tooltipstr = tooltipstr + "Pred" + selectedStation[idx] + ': ' + parseFloat(elem[0].avg.toFixed(2)) + '\n'; 
                         }
                     })
                 } else {
@@ -342,13 +344,115 @@ function LinechartMultiple(props) {
                 tooltip
                     .attr("transform", `translate(${xScale(res.date)},${yScale(0)})`)
                     .call(callout, `${formatDateTooltip(res.date)}\n${tooltipstr}`);
+
+                
+                // add horizontal bar chart
+                var horizbcdata = [];
+                filteredgt.forEach((elem, idx) => {
+                    if (elem.length > 0 && +elem[0].y !== -999){
+                        horizbcdata.push({model: selectedStation[idx], values: +elem[0].y.toFixed(2)});
+                    }
+                });
+
+                if (displayModel === "Average"){
+                    var filteredpred = predavg.map(osd => osd.filter(x => checkDateEquality(x.date,res.date)));
+                    // add prediction data
+                    filteredpred.forEach((elem, idx) => {
+                        if (elem.length > 0){
+                            horizbcdata.push({model: "pred" + selectedStation[idx], values: +elem[0].avg.toFixed(2)});
+                        }
+                    })
+                } else {
+                    // add predicted data individually
+                    prediction.forEach((arr, idx) => {
+                        selectedModels.forEach((model, idx2) => {
+                            var temparr = arr.filter(x => x.model === model);
+                            temparr = temparr.filter(x => checkDateEquality(x.date, res.date));
+                            if (temparr.length > 0){
+                                temparr.forEach((elem, idx3) => {
+                                    horizbcdata.push({model: selectedStation[idx] + " " + model, values: +elem.yhat.toFixed(2)});
+                                })
+                            }
+                        })
+                    })
+                }
+
+
+                const xScalebc = d3.scaleLinear()
+                                   .domain([0, d3.max(horizbcdata, function(d){ return +d.values})])
+                                   .range([padding * 2.5, 8 * padding]);
+
+                const yScalebc = d3.scaleBand()
+                                   .domain(horizbcdata.map(x => x.model))
+                                   .range([padding, height - 2.5 * padding]);
+
+                // Define axes
+                var xAxisbc = d3.axisBottom()
+                                .scale(xScalebc)
+                                .ticks(5)
+                                .tickFormat(function(d){
+                                    if ((d / 1000) >= 1) {
+                                        d = d / 1000 + "K";
+                                        } 
+                                        return d;
+                                });
+                var yAxisbc = d3.axisLeft()
+                                .scale(yScalebc);
+
+                
+                // if chart container exist create it
+                if (d3.select('#horizbcgroup').empty()){
+                    var tempcont = svghorizbc.append("g").attr("id", "horizbcgroup");  
+                    tempcont.append("g").attr("class", "x-axis");
+                    tempcont.append("g").attr("class", "y-axis");
+                }
+
+                var allmodelslist = [];
+                selectedStation.forEach(e => allmodelslist.push(String(e)));
+                if (displayModel === "Average"){
+                    selectedStation.forEach(e => allmodelslist.push("pred" + String(e)));
+                } else {
+                    selectedStation.forEach((e) => {
+                        selectedModels.forEach((e2) => {
+                            allmodelslist.push(String(e) + " " + String(e2));
+                        })
+                    });
+                }
+                var colormap = new Map();
+                allmodelslist.map((x,i) => colormap[x] = color[i]);
+                                
+                // add the bars
+                svghorizbc.select('#horizbcgroup').selectAll(".horizbcbar")
+                        .data(horizbcdata)
+                        .join(
+                            enter => enter.append("rect").attr("x", 2.5 * padding).attr("y",function(d){ return yScalebc(d.model)})
+                                            .attr("width", function(d){ return xScalebc(d.values) - 2.5*padding}).attr("height", yScalebc.bandwidth())
+                                            .attr("class", "horizbcbar").attr("fill", function(d, i){ return colormap[d.model]; }),
+                            update => update.attr("x", 2.5 * padding).attr("y",function(d){ return yScalebc(d.model)})
+                                            .attr("width", function(d){ return xScalebc(d.values) - 2.5*padding}).attr("height", yScalebc.bandwidth())
+                                            .attr("class", "horizbcbar").attr("fill", function(d, i){ return colormap[d.model]; }),
+                            exit => exit.remove()
+                        );
+
+                // Create axes
+                svghorizbc.select('#horizbcgroup').select(".x-axis")
+                    .attr("transform", "translate(0," + (height - 2.5 * padding) + ")")
+                    .call(xAxisbc);
+
+                svghorizbc.select('#horizbcgroup').select(".y-axis")
+                    .attr("transform", "translate(" + (padding * 2.5) + ",0)")
+                    .call(yAxisbc);
+                
+                
             });
-            svg.on("touchend mouseleave", () => tooltip.call(callout, null));
+            svg.on("touchend mouseleave", () => {tooltip.call(callout, null);
+                                                 svghorizbc.selectAll('#horizbcgroup').remove();
+                                                });  
             
 
             // Create axes
 			svg.select(".x-axis")
-                .attr("transform", "translate(0," + (height - 2*padding) + ")")
+                .attr("transform", "translate(0," + (height - 2.5*padding) + ")")
                 .call(xAxis);
 
             svgyaxis.select(".y-axis")
@@ -384,12 +488,11 @@ function LinechartMultiple(props) {
             } else {
                 selectedStation.forEach((e) => {
                     selectedModels.forEach((e2) => {
-                        legenddata.push(String(e2) + " " + String(e));
+                        legenddata.push(String(e) + " " + String(e2));
                     })
                 });
             }
             
-
             var legend = svglegend
                             .selectAll(".rectlegend")
                             .data(legenddata);
@@ -400,7 +503,6 @@ function LinechartMultiple(props) {
                 exit => exit.remove()
             );
 
-
             legend = svglegend
                     .selectAll(".legendlabel")
                     .data(legenddata);
@@ -410,7 +512,6 @@ function LinechartMultiple(props) {
                 exit => exit.remove()
             );               
                 
-            
             // create title
             svg.selectAll(".plottitle")
                 .data([1])
@@ -439,7 +540,7 @@ function LinechartMultiple(props) {
 
     // static brush chart filter at bottom
     useEffect(() => {
-        const svgbrushchart = d3.select(svgbrushChart.current);
+        const svgbrushchart = d3.select(svgRefbrushChart.current);
 
         // remove all predline from previous draws
         for (var i = 0; i< 100; i++){
@@ -456,7 +557,7 @@ function LinechartMultiple(props) {
             // scale
             const xScalebrush = d3.scaleTime()
                                 .domain([d3.min(gtylist) , d3.max(gtylist)])
-                                .range([0, width - 5]);
+                                .range([0, width]);
             
             // initial y axis
             var tempgt = groundTruth.map(osd => osd.filter(x => x.date >= xScalebrush.domain()[0] && x.date <= xScalebrush.domain()[1])).flat().map(x => x.y);
@@ -589,7 +690,7 @@ function LinechartMultiple(props) {
     }
 
     const handleResetBrush = () => {
-        const svgbrushchart = d3.select(svgbrushChart.current);
+        const svgbrushchart = d3.select(svgRefbrushChart.current);
 
         // set brush selection
         setSelection([0, width]);
@@ -603,12 +704,12 @@ function LinechartMultiple(props) {
     }
 
     const handleSelectedYearView = (e, val) => {
-        const svgbrushchart = d3.select(svgbrushChart.current);
+        const svgbrushchart = d3.select(svgRefbrushChart.current);
 
         // brush xscale
         const xScalebrush = d3.scaleTime()
         .domain([d3.min(gtylist) , d3.max(gtylist)])
-        .range([0, width - 5]);
+        .range([0, width]);
 
         var startenddate = [new Date(val, 0, 1), new Date(val, 11, 31)]; // [1 Jan Year, 31 Dec Year]
         var startenddatepixels = [xScalebrush(startenddate[0]), xScalebrush(startenddate[1])];
@@ -652,20 +753,26 @@ function LinechartMultiple(props) {
                         </svg>
                         <svg ref={svgReflegend} width={padding * 3} height={height}>
                         </svg>
+                        <svg ref={svgRefhorizbc} width={padding * 8} height={height}>
+                            <g id="#horizbcgroup">
+                                <g className="x-axis"></g>
+                                <g className="y-axis"></g>
+                            </g>
+                        </svg>
                     </div>
                     <div style={{display: "flex", alignItems: "center", marginTop: "10px", marginBottom: "10px"}}>
                         <p style={{marginLeft: "38.75px", fontWeight: "bold", marginTop: "10px", marginRight: "50px"}}>Drag to Brush and Filter Line Chart: </p>
                         <Button size="small" color="secondary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetZoom()}>Reset Zoom Line Chart</Button>
                         <Button size="small" color="primary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetBrush()}>Reset Brush</Button>
                     </div>
-                    <svg ref={svgbrushChart} width={width} height={height/3} style={{marginLeft: "38.75px"}}>
+                    <svg ref={svgRefbrushChart} width={width} height={height/3} style={{marginLeft: "38.75px"}}>
                         <g className="x-axis"></g>
                         <g className="brush"></g>
                     </svg>
                     <div style={{marginTop: "10px", marginBottom: "10px"}}>
                         <p style={{marginLeft: "38.75px", fontWeight: "bold", marginTop: "10px"}}>Drag Slider to filter by Year: </p>
                         <br/>
-                        <Slider style={{marginLeft: "38.75px", width: "1000px", height: "20px", marginTop: "20px"}} value={selectedYearView}
+                        <Slider style={{marginLeft: "38.75px", width: "900px", height: "20px", marginTop: "20px"}} value={selectedYearView}
                             aria-labelledby="discrete-slider"
                             step={1} marks={true}
                             min={selectedYear[0]} max={selectedYear.slice(-1)[0]}

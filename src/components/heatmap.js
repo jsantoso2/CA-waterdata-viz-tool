@@ -9,6 +9,8 @@ function Heatmap(props) {
 
     const svgRef = useRef();
     const legendRef = useRef();
+    const breakdownRef = useRef();
+    const breakdownlegendRef = useRef();
 
     // constants for svg properties
     const height = 500;
@@ -39,7 +41,6 @@ function Heatmap(props) {
     const [selectedYYear, setSelectedYYear] = useState();
 
     const [aggregation, setAggregation] = useState(aggregationdata[0]);
-
 
     var temparr;
     // initial load filters
@@ -82,6 +83,8 @@ function Heatmap(props) {
         // d3 code
         const svg = d3.select(svgRef.current);
         const legendsvg = d3.select(legendRef.current);
+        const breakdownsvg = d3.select(breakdownRef.current);
+        const breakdownlegendsvg = d3.select(breakdownlegendRef.current);
 
         if (typeof prediction !== "undefined" && typeof groundTruth !== "undefined"){
             svg.selectAll(".matrixsq").remove();
@@ -146,20 +149,56 @@ function Heatmap(props) {
             // need to groupby 
             if (aggregation === "Week"){
                 xdata = d3Collection.nest().key(function(d){ return d.week; })
-                        .rollup(function(v){ return d3.sum(v, function(d){ return d.y; }); })
                         .entries(xdata);
+                                
+                // add day details
+                xdata = xdata.map(function(el) {
+                    var o = Object.assign({}, el);
+                    var temp = o.values;
+                    o.value = d3.sum(temp, function(d){ return d.y; });
+                    o.startdate = new Date(Math.max.apply(null,temp.map(x => x.date)));
+                    o.enddate = new Date(Math.min.apply(null,temp.map(x => x.date)));
+                    return o;
+                });
 
                 ydata = d3Collection.nest().key(function(d){ return d.week; })
-                                .rollup(function(v){ return d3.sum(v, function(d){ return d.y; }); })
                                 .entries(ydata);
+
+                // add day details
+                ydata = ydata.map(function(el) {
+                    var o = Object.assign({}, el);
+                    var temp = o.values;
+                    o.value = d3.sum(temp, function(d){ return d.y; });
+                    o.startdate = new Date(Math.max.apply(null,temp.map(x => x.date)));
+                    o.enddate = new Date(Math.min.apply(null,temp.map(x => x.date)));
+                    return o;
+                });
             } else {
                 xdata = d3Collection.nest().key(function(d){ return d.month; })
-                                .rollup(function(v){ return d3.sum(v, function(d){ return d.y; }); })
                                 .entries(xdata);
 
+                 // add day details
+                 xdata = xdata.map(function(el) {
+                    var o = Object.assign({}, el);
+                    var temp = o.values;
+                    o.value = d3.sum(temp, function(d){ return d.y; });
+                    o.startdate = new Date(Math.max.apply(null,temp.map(x => x.date)));
+                    o.enddate = new Date(Math.min.apply(null,temp.map(x => x.date)));
+                    return o;
+                });
+
                 ydata = d3Collection.nest().key(function(d){ return d.month; })
-                                .rollup(function(v){ return d3.sum(v, function(d){ return d.y; }); })
                                 .entries(ydata);
+                
+                // add day details
+                ydata = ydata.map(function(el) {
+                    var o = Object.assign({}, el);
+                    var temp = o.values;
+                    o.value = d3.sum(temp, function(d){ return d.y; });
+                    o.startdate = new Date(Math.max.apply(null,temp.map(x => x.date)));
+                    o.enddate = new Date(Math.min.apply(null,temp.map(x => x.date)));
+                    return o;
+                });
             }
     
             var imapx = new Map();
@@ -171,7 +210,7 @@ function Heatmap(props) {
                 ydata.forEach((y, i2) => {
                     imapx[i] = +x.key;
                     imapy[i2] = +y.key;
-                    matrixdata.push({ix: i, iy: i2, valx: +x.key, valy: +y.key, value: x.value - y.value});
+                    matrixdata.push({ix: i, iy: i2, valx: +x.key, valy: +y.key, value: x.value - y.value, xarr: x.values, yarr: y.values});
 
                 })
             }); 
@@ -225,9 +264,143 @@ function Heatmap(props) {
                 .attr("valx", function(d){ return d.valx})
                 .attr("valy", function(d){ return d.valy})
                 .attr("value", function(d) { return d.value})
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
                 .attr("class", "matrixsq")
                 .on("mouseover", tip.show)
-                .on("mouseleave", tip.hide);
+                .on("mouseleave", tip.hide)
+                .on("click", function(e, d){
+                    var matrixdataclick = [];
+                    d.xarr.forEach((x, i) => {
+                        d.yarr.forEach((y, i2) => {
+                            matrixdataclick.push({ix: i, iy: i2, valx: x.date, valy: y.date, value: x.y - y.y});
+        
+                        })
+                    }); 
+
+                    // create new heatmap
+                    var xdomainclick = matrixdataclick.map(x => x.ix);
+                    var ydomainclick = matrixdataclick.map(x => x.iy);
+        
+                    // BuildScales:
+                    var xScaleclick = d3.scaleBand()
+                                    .domain(xdomainclick)
+                                    .range([padding, width - padding]);
+                    
+                    var yScaleclick = d3.scaleBand()
+                                    .domain(ydomainclick)
+                                    .range([padding, height-padding]);
+                    
+                    var colorscaleclick = d3.scaleLinear()
+                                       .domain([0, d3.max(matrixdataclick, function(d){ return Math.abs(d.value); })])
+                                       .range(["white", "red"]);
+
+                    // tooltip
+                    var tipbreakdown = d3Tip()
+                        .attr("visible", "visible")
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                            return "<strong style='color:white'>Date</strong> <span style='color:white'>" + d3.select(this).attr("valx") + " vs " + d3.select(this).attr("valy") + "</span>"
+                            + "<br/>" + "<span style='color:white'>Value: "  + Math.round(d3.select(this).attr("value") * 100) / 100;
+                        })
+                        .style("background-color", "black");
+                        
+                    breakdownsvg.selectAll(".matrixsq")
+                        .data(matrixdataclick)
+                        .join(
+                            enter => enter.append("rect").attr("x", function(d){ return xScaleclick(d.ix)}).attr("y", function(d){ return yScaleclick(d.iy)})
+                                        .attr("width", xScaleclick.bandwidth()).attr("height", yScaleclick.bandwidth()).style("fill", function(d){ return colorscaleclick(Math.abs(d.value))})
+                                        .attr("class", "matrixsq").attr("valx", function(d){ return d.valx.toISOString().substring(0, 10)}).attr("valy", function(d){ return d.valy.toISOString().substring(0, 10)}).attr("value", function(d){ return +d.value})
+                                        .attr("stroke", "black").attr("stroke-width", 1),
+                            update => update.attr("x", function(d){ return xScaleclick(d.ix)}).attr("y", function(d){ return yScaleclick(d.iy)})
+                                    .attr("width", xScaleclick.bandwidth()).attr("height", yScaleclick.bandwidth()).style("fill", function(d){ return colorscaleclick(Math.abs(d.value))})
+                                    .attr("class", "matrixsq").attr("valx", function(d){ return d.valx.toISOString().substring(0, 10)}).attr("valy", function(d){ return d.valy.toISOString().substring(0, 10)}).attr("value", function(d){ return +d.value})
+                                    .attr("stroke", "black").attr("stroke-width", 1),
+                            exit => exit.remove()
+                        )
+                        .on("mouseover", tipbreakdown.show)
+                        .on("mouseleave", tipbreakdown.hide);
+
+                    breakdownsvg.call(tipbreakdown);
+
+                    // labels
+                    breakdownsvg.selectAll(".xlabel")
+                        .data(xdomainclick)
+                        .join(
+                            enter => enter.append("text").attr("font-size", "8px").attr("x", function(d){ return xScaleclick(d) + xScaleclick.bandwidth()/2})
+                                        .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d + 1}).attr("text-anchor", "middle"),
+                            update => update.attr("font-size", "8px").attr("x", function(d){ return xScaleclick(d) + xScaleclick.bandwidth()/2})
+                                        .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d + 1}).attr("text-anchor", "middle"),
+                            exit => exit.remove()
+                        ); 
+                    
+                    breakdownsvg.selectAll(".ylabel")
+                        .data(ydomainclick)
+                        .join(
+                            enter => enter.append("text").attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
+                                        .attr("y", function(d){ return yScaleclick(d) + yScaleclick.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d + 1}),
+                            update => update.attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
+                                    .attr("y", function(d){ return yScaleclick(d) + yScaleclick.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d + 1}),
+                            exit => exit.remove()
+                    );
+
+                     // labels for axis
+                    breakdownsvg.selectAll(".xaxlabel")
+                        .data([d])
+                        .join(
+                            enter => enter.append("text").attr("font-size", "10px").attr("x", width/2).attr("y", height - padding/4)
+                                        .attr("font-weight", 700).attr("class", "xaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + d.valx; } else { return "Month " + d.valx; }}),
+                            update => update.attr("font-size", "10px").attr("x", width/2).attr("y", height - padding/4)
+                                        .attr("font-weight", 700).attr("class", "xaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + d.valx ; } else { return "Month " + d.valx; }}),
+                            exit => exit.remove()
+                        ); 
+                    
+                    breakdownsvg.selectAll(".yaxlabel")
+                        .data([d])
+                        .join(
+                            enter => enter.append("text").attr("text-anchor", "end").attr("font-size", "10px").attr("x", 0).attr("y", 0).attr("transform","rotate(-90)translate(" + -width/2 + ","  + padding / 2 + ")")
+                                        .attr("font-weight", 700).attr("class", "yaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + d.valy; } else { return "Month " + d.valy; }}),
+                            update => update.attr("text-anchor", "end").attr("font-size", "10px").attr("x", 0).attr("y", 0).attr("transform","rotate(-90)translate(" + -width/2 + ","  + padding / 2 + ")")
+                                        .attr("font-weight", 700).attr("class", "yaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + d.valy ; } else { return "Month " + d.valy; }}),
+                            exit => exit.remove()
+                    ); 
+                    
+                    // title
+                    breakdownsvg.selectAll(".breakdowntitle")
+                        .data([d])
+                        .join(
+                            enter => enter.append("text").attr("x", width/2).attr("y", padding/2).text(function(d){ if (aggregation === "Week"){ return "Week " + d.valx + " vs " + d.valy; } else { return "Month " + d.valx + " vs " + d.valy}})
+                                        .attr("class", "breakdowntitle").attr("font-weight", 700).attr("text-anchor", "middle"),
+                            update => update.attr("x", width/2).attr("y", padding/2).text(function(d){ if (aggregation === "Week"){ return "Week " + d.valx + " vs " + d.valy; } else { return "Month " + d.valx + " vs " + d.valy}})
+                                        .attr("class", "breakdowntitle").attr("font-weight", 700).attr("text-anchor", "middle"),
+                            exit => exit.remove()
+                    );
+                    
+                    // add breakdown legend
+                    var legendLinearbd = legendColor()
+                                            .labelFormat(d3.format(".1f"))
+                                            .shapeWidth(30)
+                                            .cells(20)
+                                            .orient('vertical')
+                                            .scale(colorscaleclick);
+                    
+                    breakdownlegendsvg.selectAll(".legendtitle")
+                        .data([1])
+                        .join(
+                            enter => enter.append("text").attr("x", 10).attr("y", 10).text("Legend")
+                                        .attr("class", "legendtitle").attr("font-weight", 700),
+                            update => update.attr("x", 10).attr("y", 10).text("Legend")
+                                        .attr("class", "legendtitle").attr("font-weight", 700),
+                            exit => exit.remove()
+                    );
+
+
+                    breakdownlegendsvg.select(".legendLinear")
+                                    .attr("transform", "translate(0," + (padding/2) + ")")
+                                    .call(legendLinearbd)
+
+                });
             
             svg.call(tip);
 
@@ -239,7 +412,7 @@ function Heatmap(props) {
                 .join(
                     enter => enter.append("text").attr("font-size", "8px").attr("x", function(d){ return xScale(d.ix) + xScale.bandwidth()/2})
                                 .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d.valx}).attr("text-anchor", "middle"),
-                    update => update.append("text").attr("font-size", "8px").attr("x", function(d){ return xScale(d.ix) + xScale.bandwidth()/2})
+                    update => update.attr("font-size", "8px").attr("x", function(d){ return xScale(d.ix) + xScale.bandwidth()/2})
                                 .attr("y", height - padding/1.5).attr("class", "xlabel").text(function(d){ return d.valx}).attr("text-anchor", "middle"),
                     exit => exit.remove()
                 ); 
@@ -249,11 +422,35 @@ function Heatmap(props) {
                 .join(
                     enter => enter.append("text").attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
                                 .attr("y", function(d){ return yScale(d.iy) + yScale.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d.valy}),
-                    update => update.append("text").attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
+                    update => update.attr("font-size", "8px").attr("x", padding/1.5).attr("text-anchor", "middle")
                               .attr("y", function(d){ return yScale(d.iy) + yScale.bandwidth()/2}).attr("class", "ylabel").text(function(d){ return d.valy}),
+                    exit => exit.remove()
+            );
+            
+            
+            // labels for axis
+            svg.selectAll(".xaxlabel")
+                .data([1])
+                .join(
+                    enter => enter.append("text").attr("font-size", "10px").attr("x", width/2).attr("y", height - padding/4)
+                                .attr("font-weight", 700).attr("class", "xaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + selectedXYear; } else { return "Month " + selectedXYear; }}),
+                    update => update.attr("font-size", "10px").attr("x", width/2).attr("y", height - padding/4)
+                                .attr("font-weight", 700).attr("class", "xaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week "+ selectedXYear; } else { return "Month " + selectedXYear; }}),
                     exit => exit.remove()
                 ); 
             
+            svg.selectAll(".yaxlabel")
+                .data([1])
+                .join(
+                    enter => enter.append("text").attr("text-anchor", "end").attr("font-size", "10px").attr("x", 0).attr("y", 0).attr("transform","rotate(-90)translate(" + -width/2 + ","  + padding / 2 + ")")
+                                .attr("font-weight", 700).attr("class", "yaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + selectedYYear; } else { return "Month " + selectedYYear; }}),
+                    update => update.attr("text-anchor", "end").attr("font-size", "10px").attr("x", 0).attr("y", 0).attr("transform","rotate(-90)translate(" + -width/2 + ","  + padding / 2 + ")")
+                                .attr("font-weight", 700).attr("class", "yaxlabel").text(function(d){ if (aggregation === "Week"){ return "Week " + selectedYYear; } else { return "Month " + selectedYYear; }}),
+                    exit => exit.remove()
+            ); 
+            
+            
+            // legend
             var legendLinear = legendColor()
                 .labelFormat(d3.format(".0f"))
                 .shapeWidth(30)
@@ -343,7 +540,8 @@ function Heatmap(props) {
                     </NativeSelect>
                 </FormControl>
             </div>
-            <h2 style={{marginTop: "20px"}}>{"Heatmap for Station " + oneselectedStation}</h2>
+            <h3 style={{marginTop: "20px"}}>{"Heatmap for Station " + oneselectedStation}</h3>
+            <p>Click on box to view breakdown by day!</p>
             <div style={{display: "flex", alignItems: "center"}}>
                 <svg ref={svgRef} width = {width} height = {height}>
                     <g className="y-axis"></g>
@@ -351,6 +549,13 @@ function Heatmap(props) {
                 </svg>
                 <svg ref={legendRef} width = {width / 5} height={height}>
                     <text x="10" y="10" fontWeight="700">Legend</text>
+                    <g className="legendLinear"></g>
+                </svg>
+                <svg ref={breakdownRef} width={width} height = {height}>
+                    <g className="y-axis"></g>
+                    <g className="x-axis"></g>
+                </svg>
+                <svg ref={breakdownlegendRef} width={width / 5} height = {height}>
                     <g className="legendLinear"></g>
                 </svg>
             </div>

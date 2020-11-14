@@ -22,8 +22,6 @@ function Mainfilter() {
     var mapboxapitoken = "pk.eyJ1IjoianNhbnRvc28yIiwiYSI6ImNrZ3NxYmc0MjBydXgyeXAyZTdoa2U1NXoifQ.Kb508UG3LtW2dakyxJj2eA";
 
     // code parameters
-    // var toolTip = d3.select('body').append('div').attr('class','tooltip').style('opacity', 0);
-    // var heightMap = 400, widthMap = 750;
     var numCols = [4,5,6,7,8,9];
     var accuracyMeasures = [{n:'None',v:'none'},{n:'Root mean squared error',v:'rmse'},{n:'Mean absolute error',v:'mae'}];
     var coloringSchemes = [{n:'Absolute divergence',v:'absolute'},{n:'Relative divergence',v:'relative'}];
@@ -46,8 +44,7 @@ function Mainfilter() {
     const [allModels, setAllModels] = useState([]);
 
     const [selectedStationData, setSelectedStationData] = useState([]);
-
-    // const [selectedStationHM, setSelectedStationHM] = useState(selectedStation[0]);
+    const [selectedStationHM, setSelectedStationHM] = useState([]);
 
 
     // keep track of maps state
@@ -91,6 +88,7 @@ function Mainfilter() {
                     
                     // set selected station
                     setSelectedStation([...new Set([...selectedStation, currStation])]);
+                    setSelectedStationHM([...new Set([...selectedStation, currStation])][0]);
 
                     // preprocess only once
                     function rowConverterPrediction(d){
@@ -196,8 +194,7 @@ function Mainfilter() {
     // function for unclick
     const unclickMarker = (unclickstation) => {
         setSelectedStation(selectedStation.filter(item => item !== unclickstation)); // remove selection
-        //setSelectedYear([0,0]); // set selectedYear to Null
-        //setSelectedModels([]); // set selectedModel to Null
+        setSelectedStationHM(selectedStation.filter(item => item !== unclickstation)[0]); 
 
         var currselecteddata = [...selectedStationData];
         currselecteddata = currselecteddata.filter(item => item[2] !== unclickstation);
@@ -246,7 +243,8 @@ function Mainfilter() {
                 // #################################################################### FOR TESTING ONLY. DELETE LATER
                 setSelectedModels(["ModelA", "ModelB", "ModelC"]);  //
                 setSelectedYear([1979, 2019]);
-                setSelectedStation(["11195500", "1197250"]); 
+                setSelectedStation(["11195500", "11197250"]); 
+                setSelectedStationHM("11195500");
 
                 // preprocess only once
                 function rowConverterPrediction(d){
@@ -272,7 +270,6 @@ function Mainfilter() {
                 Promise.all(files)
                 .then(
                     function(read_files) {
-                        console.log("read_files", read_files);
                         var testingarr = []
                         // convert row to correct data type
                         var prediction = read_files[0].map(x => rowConverterPrediction(x));
@@ -424,7 +421,7 @@ function Mainfilter() {
                         {/* <ReactMapGL {...viewport}
                             mapboxApiAccessToken={mapboxapitoken}
                             onViewportChange={(viewport) => { changeviewport(viewport);}}
-                            mapStyle="mapbox://styles/jsantoso2/ckgsqipgq1tzg19mlxmrcub3c"
+                            mapStyle="mapbox://styles/jsantoso2/ckhi6heb60oia19n1f0a3vjoi"
                         >
                             {stationdata.map(function(d){
                                 if (selectedStation.includes(d.STAID)){
@@ -534,13 +531,6 @@ function Mainfilter() {
                 </Grid>
             </div>
         
-
-        <div>
-            <button id="classificationByModelButton" type="button">Classification by model</button>
-            <button id="meanButton" type="button">Average Decision</button>
-            <button id="majorityButton" type="button">Majority Decision</button>
-            <button id="divergenceButton" type="button">Agreement</button>
-        </div>
             
         <div id="filtersDiv">
             <p>{"localrangevalue: " + localRangeValues}</p>
@@ -556,20 +546,17 @@ function Mainfilter() {
                 <LinechartMultiple key={"lcmultiple"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} displayModel={displayModel}/>
             : null}
 
-            {/* <FormControl>
-                <InputLabel shrink>Display HeatMap: </InputLabel>
-                <NativeSelect onChange={(e) => setSelectedStationHM(e.target.value)}>
-                    {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl> */}
+
             {(selectedStationData.length > 0)?
-                <Grid container spacing={0}>
-                    {selectedStationData.map(x => 
-                        <Grid key={"grid"+x[2]} item xs={12} sm={6} md={5} style={{marginRight: "20px"}}>
-                             <Heatmap key={"hm"+x[2]} oneselectedStation={x[2]} selectedModels={selectedModels} selectedYear={selectedYear} prediction={x[0]} groundTruth={x[1]}/>
-                        </Grid>
-                    )}
-                </Grid>
+                <div>
+                    <FormControl style={{marginLeft: "20px", marginBottom: "20px"}}>
+                        <InputLabel shrink>Display Station HeatMap: </InputLabel>
+                        <NativeSelect onChange={(e) => setSelectedStationHM(e.target.value)} style={{width: "200px"}}>
+                            {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
+                        </NativeSelect>
+                    </FormControl>
+                    <Heatmap key={"hm"} oneselectedStation={selectedStationHM} selectedModels={selectedModels} selectedYear={selectedYear} prediction={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][0]} groundTruth={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][1]}/>
+                </div>
             : null}
             
 
