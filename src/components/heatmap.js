@@ -230,7 +230,7 @@ function Heatmap(props) {
                             .range([padding, height-padding]);
             
             var colorscale = d3.scaleLinear()
-                               .domain([0, d3.max(matrixdata, function(d){ return Math.abs(d.value); })])
+                               .domain([d3.min(matrixdata, function(d){ return Math.abs(d.value); }), d3.max(matrixdata, function(d){ return Math.abs(d.value); })])
                                .range(["white", "blue"]);
 
             // tooltip
@@ -292,7 +292,7 @@ function Heatmap(props) {
                                     .range([padding, height-padding]);
                     
                     var colorscaleclick = d3.scaleLinear()
-                                       .domain([0, d3.max(matrixdataclick, function(d){ return Math.abs(d.value); })])
+                                       .domain([d3.min(matrixdataclick, function(d){ return Math.abs(d.value); }), d3.max(matrixdataclick, function(d){ return Math.abs(d.value); })])
                                        .range(["white", "red"]);
 
                     // tooltip

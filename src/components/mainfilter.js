@@ -101,7 +101,7 @@ function Mainfilter() {
                     // preprocess only once
                     function rowConverterPrediction(d){
                         return {
-                            date: new Date(d.ds.split('-')[0], d.ds.split('-')[1] - 1, d.ds.split('-')[2]),
+                            date: new Date(d.Date.split('-')[0], d.Date.split('-')[1] - 1, d.Date.split('-')[2]),
                             model: d.index,
                             yhat: +d.yhat
                         }
