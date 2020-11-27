@@ -381,7 +381,7 @@ function Heatmap(props) {
                     var legendLinearbd = legendColor()
                                             .labelFormat(d3.format(".1f"))
                                             .shapeWidth(30)
-                                            .cells(20)
+                                            .cells(10)
                                             .orient('vertical')
                                             .scale(colorscaleclick);
                     

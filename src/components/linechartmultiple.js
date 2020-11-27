@@ -14,7 +14,10 @@ function LinechartMultiple(props) {
     const svgRefhorizbc = useRef();
 
     // color for different models
-    var color = ["blue", "pink", "red", "yellow", "green", "orange", "purple", "black", "black", "black", "black", "black", "black", "black"];
+    var color = ["blue", "pink", "red", "yellow", "green", "orange", "purple", "black", "black", "black",
+                "black", "black", "black", "black", "black", "black", "black", "black", "black", "black",
+                "black", "black", "black", "black", "black", "black", "black", "black", "black", "black",
+                "black", "black", "black", "black", "black", "black", "black", "black", "black", "black"];
 
     // passed properties
     var selectedStation = props.selectedStation;
@@ -83,6 +86,7 @@ function LinechartMultiple(props) {
         // remove all gtline from previous draws
         for (var i = 0; i< 100; i++){
             svg.selectAll("#gtline"+i).remove();
+            svg.selectAll("#aeline"+i).remove();
         }
         
 
@@ -160,7 +164,9 @@ function LinechartMultiple(props) {
             var line = d3.line()
                         .x(function(d) { return xScale(d.date)})
                         .y(function(d){ return yScale(+d.y)});
-                
+            var lineae = d3.line()
+                            .x(function(d){ return xScale(d.date)})
+                            .y(function(d){ return yScale(+d.ae)});
             var linepred = d3.line()
                             .x(function(d) { return xScale(d.date)})
                             .y(function(d){ return yScale(+d.avg)});
@@ -170,6 +176,7 @@ function LinechartMultiple(props) {
             
             // gt line
             groundTruth.forEach((e, i) => {
+                var e = e.filter(f => f.y !== -999);
                 svg.selectAll("#gtline" + i)
                     .data([e])
                     .join("path")
@@ -177,6 +184,16 @@ function LinechartMultiple(props) {
                     .attr("fill", "none")
                     .attr("stroke", color[i])
                     .attr("id", "gtline"+i);
+            })
+            // autoencoder line
+            groundTruth.forEach((e, i) => {
+                svg.selectAll("#aeline" + i)
+                    .data([e])
+                    .join("path")
+                    .attr("d", value => lineae(value))
+                    .attr("fill", "none")
+                    .attr("stroke", color[i + selectedStation.length])
+                    .attr("id", "aeline"+i);
             })
 
             var predavg; 
@@ -210,7 +227,7 @@ function LinechartMultiple(props) {
                     .join("path")
                     .attr("d", value => linepred(value))
                     .attr("fill", "none")
-                    .attr("stroke", color[props.selectedStation.length + idx])
+                    .attr("stroke", color[props.selectedStation.length * 2 + idx])
                     .attr("id", "predline"+idx);
                 });
             } else {
@@ -223,7 +240,7 @@ function LinechartMultiple(props) {
                         .join("path")
                         .attr("d", value => linepredind(value))
                         .attr("fill", "none")
-                        .attr("stroke", color[props.selectedStation.length + tempcounter])
+                        .attr("stroke", color[props.selectedStation.length * 2 + tempcounter])
                         .attr("id", "predline"+tempcounter);
                         tempcounter = tempcounter + 1;
                     })
@@ -240,7 +257,7 @@ function LinechartMultiple(props) {
             lastdate = new Date(Math.max.apply(null,lastdate));
             if (groundTruthCopy.length > 0){
                 if (+lastdate > +groundTruthCopy.slice(-1)[0].date){
-                    lastdate = lastdate;
+                    //skip
                 } else {
                     lastdate = groundTruthCopy.slice(-1)[0].date;
                 }
@@ -305,7 +322,7 @@ function LinechartMultiple(props) {
                 return (x.getFullYear() === y.getFullYear()) && (x.getMonth() === y.getMonth()) && (x.getDate() === y.getDate());
             }
             
-            const tooltip = d3.selectAll(".tooltip"); //props.selectedStation
+            const tooltip = d3.selectAll(".tooltip"); 
             svg.on("touchmove mousemove", function(event) {
                 const res = bfunc(d3.pointer(event,this)[0]);
                 var filteredgt = groundTruth.map(osd => osd.filter(x => checkDateEquality(x.date, res.date)));
@@ -316,7 +333,12 @@ function LinechartMultiple(props) {
                     if (elem.length > 0 && +elem[0].y !== -999){
                         tooltipstr = tooltipstr + selectedStation[idx] + ': ' + parseFloat(elem[0].y.toFixed(2)) + '\n'; 
                     }
-                }) 
+                })
+                filteredgt.forEach((elem, idx) => {
+                    if (elem.length > 0 && +elem[0].y !== -999 && +elem[0].ae >= 0){
+                        tooltipstr = tooltipstr + selectedStation[idx] + ' AE: ' + parseFloat(elem[0].ae.toFixed(2)) + '\n'; 
+                    }
+                })
 
                 if (displayModel === "Average"){
                     var filteredpred = predavg.map(osd => osd.filter(x => checkDateEquality(x.date,res.date)));
@@ -351,6 +373,12 @@ function LinechartMultiple(props) {
                 filteredgt.forEach((elem, idx) => {
                     if (elem.length > 0 && +elem[0].y !== -999){
                         horizbcdata.push({model: selectedStation[idx], values: +elem[0].y.toFixed(2)});
+                    }
+                });
+                // for autoencoder
+                filteredgt.forEach((elem, idx) => {
+                    if (elem.length > 0 && +elem[0].y !== -999 && +elem[0].ae !== -1){
+                        horizbcdata.push({model: "AE" + selectedStation[idx], values: +elem[0].ae.toFixed(2)});
                     }
                 });
 
@@ -409,6 +437,7 @@ function LinechartMultiple(props) {
 
                 var allmodelslist = [];
                 selectedStation.forEach(e => allmodelslist.push(String(e)));
+                selectedStation.forEach(e => allmodelslist.push("AE" + String(e)));
                 if (displayModel === "Average"){
                     selectedStation.forEach(e => allmodelslist.push("pred" + String(e)));
                 } else {
@@ -420,7 +449,7 @@ function LinechartMultiple(props) {
                 }
                 var colormap = new Map();
                 allmodelslist.map((x,i) => colormap[x] = color[i]);
-                                
+
                 // add the bars
                 svghorizbc.select('#horizbcgroup').selectAll(".horizbcbar")
                         .data(horizbcdata)
@@ -483,6 +512,7 @@ function LinechartMultiple(props) {
             // create legend
             var legenddata = [];
             selectedStation.forEach(e => legenddata.push(String(e)));
+            selectedStation.forEach(e => legenddata.push("AE" + String(e)));
             if (displayModel === "Average"){
                 selectedStation.forEach(e => legenddata.push("Pred" + String(e)));
             } else {
@@ -519,7 +549,7 @@ function LinechartMultiple(props) {
                     enter => enter.append("text").attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
                                 .attr("font-weight", 700).attr("class", "plottitle").text("StreamFlow for Stations")
                                 .style("font-size", "18px").style("text-decoration", "underline"),
-                    update => update.append("text").attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
+                    update => update.attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
                                 .attr("font-weight", 700).style("font-size", "18px").style("text-decoration", "underline").attr("class", "plottitle")
                                 .text("StreamFlow for Stations"),
                     exit => exit.remove()
@@ -550,6 +580,7 @@ function LinechartMultiple(props) {
         // remove all gtline from previous draws
         for (var i = 0; i< 100; i++){
             svgbrushchart.selectAll("#gtline"+i).remove();
+            svgbrushchart.selectAll("#aeline"+i).remove();
         }
 
 
@@ -582,7 +613,9 @@ function LinechartMultiple(props) {
             var linebrush  = d3.line()
                 .x(function(d) { return xScalebrush(d.date)})
                 .y(function(d){ return yScalebrush(+d.y)});
-
+            var linebrushae = d3.line()
+                .x(function(d) { return xScalebrush(d.date)})
+                .y(function(d){ return yScalebrush(+d.ae)});
             var linepredbrush = d3.line()
                 .x(function(d) { return xScalebrush(d.date)})
                 .y(function(d){ return yScalebrush(+d.avg)});
@@ -593,6 +626,7 @@ function LinechartMultiple(props) {
 
             // ground truth line 
             groundTruth.forEach((e, i) => {
+                var e = e.filter(f => f.y !== -999);
                 svgbrushchart.selectAll("#gtline" + i)
                     .data([e])
                     .join("path")
@@ -600,7 +634,17 @@ function LinechartMultiple(props) {
                     .attr("fill", "none")
                     .attr("stroke", color[i])
                     .attr("id", "gtline"+i);
-            })
+            });
+            // autoencoder line
+            groundTruth.forEach((e, i) => {
+                svgbrushchart.selectAll("#aeline" + i)
+                    .data([e])
+                    .join("path")
+                    .attr("d", value => linebrushae(value))
+                    .attr("fill", "none")
+                    .attr("stroke", color[i + selectedStation.length])
+                    .attr("id", "aeline"+i);
+            });
 
             // individual model line
             var predavg; 
@@ -634,7 +678,7 @@ function LinechartMultiple(props) {
                     .join("path")
                     .attr("d", value => linepredbrush(value))
                     .attr("fill", "none")
-                    .attr("stroke", color[props.selectedStation.length + idx])
+                    .attr("stroke", color[props.selectedStation.length * 2 + idx])
                     .attr("id", "predline"+idx);
                 });
             } else {
@@ -647,7 +691,7 @@ function LinechartMultiple(props) {
                         .join("path")
                         .attr("d", value => linepredindbrush(value))
                         .attr("fill", "none")
-                        .attr("stroke", color[props.selectedStation.length + tempcounter])
+                        .attr("stroke", color[props.selectedStation.length *2 + tempcounter])
                         .attr("id", "predline"+tempcounter);
                         tempcounter = tempcounter + 1;
                     })
