@@ -50,7 +50,7 @@ function LinechartMultiple(props) {
     }
 
     // constants for svg properties
-    const height = 450;
+    const height = 400;
     const width = 900;
     const padding = 40;
     var formatTime = d3.timeFormat("%b %Y");
@@ -781,6 +781,10 @@ function LinechartMultiple(props) {
     return (
         <div>
             {props.selectedStationData? 
+                <div>
+                    <div style={{backgroundColor: "#62a5e7", color: "white"}}>
+                        <h2 style={{margin: "10px"}}>LineChart for Predictions</h2>
+                    </div>
                 <div style={{margin: "20px"}}>
                     <div style={{display: "flex", alignItems: "center"}}>
                         <svg ref={svgRefyAxis} width={padding} height={height}>
@@ -824,6 +828,7 @@ function LinechartMultiple(props) {
                             onChange={(e, v) => handleSelectedYearView(e, v)}
                         />
                     </div>
+                </div>
                 </div>
             : null}
         </div>

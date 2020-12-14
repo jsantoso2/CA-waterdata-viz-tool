@@ -94,9 +94,14 @@ function Barchart(props) {
                     .attr('class', 'd3-tip')
                     .offset([-2, 0])
                     .html(function(d) {
-                        return "<strong style='color:white'>Year: </strong>" + "<span style='color:white'>" + d3.select(this).attr("year")
-                        + "<br/>" + "<span style='color:white'>Actual/AE: "  + Math.round(d3.select(this).attr("actual") * 100) / 100
-                        + "<br/>" + "<span style='color:white'>Prediction: "  + Math.round(d3.select(this).attr("pred") * 100) / 100;
+                        if (+d3.select(this).attr("pred") !== -999){
+                            return "<strong style='color:white'>Year: </strong>" + "<span style='color:white'>" + d3.select(this).attr("year")
+                            + "<br/>" + "<span style='color:white'>Actual/AE: "  + Math.round(d3.select(this).attr("actual") * 100) / 100
+                            + "<br/>" + "<span style='color:white'>Prediction: "  + Math.round(d3.select(this).attr("pred") * 100) / 100;
+                        } else {
+                            return "<strong style='color:white'>Year: </strong>" + "<span style='color:white'>" + d3.select(this).attr("year")
+                            + "<br/>" + "<span style='color:white'>Actual/AE: "  + Math.round(d3.select(this).attr("actual") * 100) / 100;
+                        }
                     })
                     .style("background-color", "black");
                 

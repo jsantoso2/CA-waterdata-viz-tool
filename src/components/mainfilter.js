@@ -11,11 +11,13 @@ Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@ma
 import {Alert} from '@material-ui/lab';
 
 
-import ws1 from '../watershed_data/ws1.json';
-import ws2 from '../watershed_data/ws2.json';
-import ws3 from '../watershed_data/ws3.json';
-import ws4 from '../watershed_data/ws4.json';
+import ws1 from '../geojson_data/ws1.json';
+import ws2 from '../geojson_data/ws2.json';
+import ws3 from '../geojson_data/ws3.json';
+import ws4 from '../geojson_data/ws4.json';
 
+import cacounties from '../geojson_data/CACounties.json';
+import servicearea from '../geojson_data/ServiceAreas.json';
 
 
 function Mainfilter() {
@@ -38,6 +40,8 @@ function Mainfilter() {
     const [refStation, setRefStation] = useState(true);
     const [nonrefStation, setNonRefStation] = useState(true);
     const [wsCheckBox, setWSCheckBox] = useState(true);
+    const [countiesCheckBox, setCountiesCheckBox] = useState(true);
+    const [serviceCheckBox, setServiceCheckBox] = useState(true);
 
     const [selectedYear, setSelectedYear] = useState([0,0]);
     const [selectedModels, setSelectedModels] = useState([]);
@@ -62,8 +66,11 @@ function Mainfilter() {
     const [showPopup, setShowPopup] = useState(true);
     const [hoverStationProps, sethoverStationProps] = useState([]); // use for hovering
     const [hoverWatershedProps, setHoverWatershedProps] = useState([]);
+    const [hoverCountiesProps, setHoverCountiesProps] = useState([]);
+    const [hoverServiceProps, setHoverServiceProps] = useState([]);
 
-    const [currInteractiveLayer, setCurrInteractiveLayer] = useState(['ws1', 'ws2', 'ws3', 'ws4']);
+    const [currInteractiveLayer, setCurrInteractiveLayer] = useState([]);
+    const [currInteractiveOptions, setCurrInteractiveOptions] = useState(['Counties', 'Service Area', 'WaterShed']);
 
 
 
@@ -429,19 +436,40 @@ function Mainfilter() {
     }
 
 
-    // handle hover on watershed
-    const handleHoverWatershed = (e) => {
-        if (typeof e.features !== "undefined" && e.features.length > 0){
-            setHoverWatershedProps([e.features[0].properties.HUC8, e.features[0].properties.Name, e.lngLat[0], e.lngLat[1], e.features[0].layer.id]);
-        } else {
-            setHoverWatershedProps([]);
+    // handle click onMap
+    const handleClickMapFeatures = (e) => {
+        // get last element layer to be interactive only
+        if (currInteractiveLayer[currInteractiveLayer.length - 1] === 'ws1' || currInteractiveLayer[currInteractiveLayer.length - 1] === 'ws2' ||
+        currInteractiveLayer[currInteractiveLayer.length - 1] === 'ws3' || currInteractiveLayer[currInteractiveLayer.length - 1] === 'ws4'){
+            if (typeof e.features !== "undefined" && e.features.length > 0){
+                setHoverWatershedProps([e.features[0].properties.HUC8, e.features[0].properties.Name, e.lngLat[0], e.lngLat[1], e.features[0].layer.id]);
+            } else {
+                setHoverWatershedProps([]);
+            }
+        } else if (currInteractiveLayer[currInteractiveLayer.length - 1] === 'counties'){
+            if (typeof e.features !== "undefined" && e.features.length > 0){
+                setHoverCountiesProps([e.features[0].properties.NAMELSAD, e.features[0].properties.ALAND + e.features[0].properties.AWATER, e.features[0].properties.POPULATION, e.lngLat[0], e.lngLat[1]]);
+            } else {
+                setHoverCountiesProps([]);
+            }
+        } else if (currInteractiveLayer[currInteractiveLayer.length - 1] === 'service'){
+            if (typeof e.features !== "undefined" && e.features.length > 0){
+                setHoverServiceProps([e.features[0].properties.name, e.features[0].properties.ALAND + e.features[0].properties.AWATER, e.lngLat[0], e.lngLat[1]]);
+            } else {
+                setHoverServiceProps([]);
+            }
         }
+
     }
 
+    // number with commas
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
 
     return (
-        <div style={{margin: "20px"}}>
-            <div style={{display: "flex", alignItems: "center"}}>
+        <div style={{marginTop: "5px"}}>
+            <div style={{display: "flex", alignItems: "center", marginLeft: "10px"}}>
                 <FormControlLabel
                     control={
                         <Checkbox id="refCheckBox" checked={refStation} onClick={() => {filterStations('Ref')}} name="RefCheck"
@@ -457,16 +485,58 @@ function Mainfilter() {
                         <Checkbox id="wsCheckBox" checked={wsCheckBox} name="WSCheck"
                             onClick={() => {setWSCheckBox(!wsCheckBox); 
                                 if (!wsCheckBox === true){
-                                    setCurrInteractiveLayer([...new Set([...currInteractiveLayer, 'ws1', 'ws2', 'ws3', 'ws4'])]);
+                                    setCurrInteractiveOptions(Array.from([...new Set([...currInteractiveOptions, 'WaterShed'])]).sort());
                                 } else {
-                                    // remove all ws1, ws2, ws3, ws4
-                                    setCurrInteractiveLayer(currInteractiveLayer.filter(x => x !== 'ws1' && x !== 'ws2' && x !== 'ws3' && x !== 'ws4'));
+                                    setCurrInteractiveOptions(currInteractiveOptions.filter(x => x !== 'WaterShed'));
                                 }
                             }} 
                             color="primary" label="Watershed" size="small"/>
                     } label="Watershed" />
+                <FormControlLabel
+                    control={
+                        <Checkbox id="countiesCheckBox" checked={countiesCheckBox} name="CountiesCheck"
+                            onClick={() => {setCountiesCheckBox(!countiesCheckBox); 
+                                if (!countiesCheckBox === true){
+                                    setCurrInteractiveOptions(Array.from([...new Set([...currInteractiveOptions, 'Counties'])]).sort());
+                                } else {
+                                    // remove counties layer
+                                    setCurrInteractiveOptions(currInteractiveOptions.filter(x => x !== 'Counties'));
+                                }
+                            }} 
+                            color="primary" label="Counties" size="small"/>
+                    } label="Counties" />
+                <FormControlLabel
+                    control={
+                        <Checkbox id="serviceCheckBox" checked={serviceCheckBox} name="ServiceCheck"
+                            onClick={() => {setServiceCheckBox(!serviceCheckBox); 
+                                if (!serviceCheckBox === true){
+                                    setCurrInteractiveOptions(Array.from([...new Set([...currInteractiveOptions, 'Service Area'])]).sort());
+                                } else {
+                                    // remove service layer
+                                    setCurrInteractiveOptions(currInteractiveOptions.filter(x => x !== 'Service Area'));
+                                }
+                            }} 
+                            color="primary" label="Service Area" size="small"/>
+                    } label="Service Area" />
                 <Button variant="contained" onClick={() => resetMap()} disableElevation>Reset Map</Button>
+            </div>
+            <div style={{display: "flex", alignItems: "center", marginLeft: "10px"}}>
+                <p style={{marginRight: "10px", fontWeight: "bold"}}>Interactive Layer: </p>
+                    <FormControl style={{width: "150px", marginRight: "20px"}}>
+                        <Select onChange={(d) => {
+                            if (d.target.value === 'Counties'){
+                                setCurrInteractiveLayer(["counties"]);
+                            } else if (d.target.value === 'Service Area'){
+                                setCurrInteractiveLayer(["service"]);
+                            } else {
+                                setCurrInteractiveLayer(["ws1", "ws2", "ws3", "ws4"]);
+                            }
+                        }}>
+                            {currInteractiveOptions.map(x => <option value={x} key={x}>{x}</option>)}
+                        </Select>
+                    </FormControl>
                 <p style={{marginLeft: "10px", fontWeight: "bold"}}>{"Selected Station: " + selectedStation}</p>
+
             </div>
             <div style={{display: "flex", alignItems: "center", margin: "10px"}}>
                 <Grid container spacing={0}>
@@ -475,7 +545,7 @@ function Mainfilter() {
                             mapboxApiAccessToken={mapboxapitoken}
                             onViewportChange={(viewport) => { changeviewport(viewport);}}
                             mapStyle= "mapbox://styles/jsantoso2/ckhobdd621o1u1apeoapjb84i"   
-                            onClick={handleHoverWatershed}
+                            onClick={handleClickMapFeatures}
                             interactiveLayerIds={currInteractiveLayer}
                         >
                             {stationdata.map(function(d){
@@ -509,6 +579,33 @@ function Mainfilter() {
                                 }
                             })}
 
+                            {(typeof cacounties  !== "undefined")?
+                                <Source id="counties" type="geojson" data={cacounties}>
+                                   <Layer id="counties" type="fill" paint={{"fill-color": {
+                                            property: 'POPULATION',
+                                            stops: [
+                                                [0, '#FDEDEC'],
+                                                [100000, '#FADBD8'],
+                                                [300000, '#F5B7B1'],
+                                                [500000, "#F1948A"],
+                                                [1000000, '#EC7063'],
+                                                [5000000, '#E74C3C'],
+                                                [10000000, '#CB4335'],
+                                                [15000000, '#B03A2E']
+                                            ]
+                                        }, "fill-opacity": countiesCheckBox?0.6:0, "fill-outline-color": "black"}}>
+                                    </Layer>
+                                </Source>
+                            : null}
+                            
+                            {(typeof cacounties  !== "undefined")?
+                                <Source id="service" type="geojson" data={servicearea}>
+                                   <Layer id="service" type="fill" paint={{"fill-color": "#B0B0B0", "fill-opacity": serviceCheckBox?0.6:0, "fill-outline-color": "white"}}>
+                                    </Layer>
+                                </Source>
+                            : null}
+
+
                             {(typeof ws1 !== "undefined")? 
                                 <Source id="ws1" type="geojson" data={ws1}>
                                     <Layer id="ws1" type="fill" paint={{"fill-color": "#f598be", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "white"}}></Layer>
@@ -529,6 +626,8 @@ function Mainfilter() {
                                     <Layer id="ws4" type="fill" paint={{"fill-color": "#d67ad0", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "white"}}></Layer>
                                 </Source>
                             : null}
+
+                
 
                             {(showPopup) && (hoverStationProps.length === 1) ? ( 
                                 <Popup
@@ -558,6 +657,39 @@ function Mainfilter() {
                                    </div>
                                </Popup>
                             ) : null}
+
+                            {(hoverCountiesProps.length > 0) ? (
+                                <Popup
+                                   latitude={hoverCountiesProps[4]}
+                                   longitude={hoverCountiesProps[3]}
+                                   dynamicPosition={false}
+                                   onClose={() => setHoverCountiesProps([])}
+                               >
+                                   <div style={{fontSize: "10px"}}>
+                                       <h3>{"Name: " + hoverCountiesProps[0]}</h3>
+                                       <p>{"Land Area: " + numberWithCommas(Math.round(hoverCountiesProps[1]/1000000))  + " km2"}</p>
+                                       <p>{"Population: " + numberWithCommas(hoverCountiesProps[2])}</p>
+                                   </div>
+                               </Popup>
+                            ) : null}
+
+                            {(hoverServiceProps.length > 0) ? (
+                                <Popup
+                                   latitude={hoverServiceProps[3]}
+                                   longitude={hoverServiceProps[2]}
+                                   dynamicPosition={false}
+                                   onClose={() => setHoverServiceProps([])}
+                               >
+                                   <div style={{fontSize: "10px"}}>
+                                       <h3>{"Name: " + hoverServiceProps[0]}</h3>
+                                       <p>{"Water Usage: " + Math.round(hoverServiceProps[1]/1000000)  + " km2"}</p>
+                                   </div>
+                               </Popup>
+                            ) : null}
+
+
+
+
                         </MapGL>
                         {/* <div style={{height: "75vh", width: "50vw", backgroundColor: "black"}}></div> */}
                     </Grid>
@@ -625,10 +757,10 @@ function Mainfilter() {
         
             
         <div id="filtersDiv">
-            <p>{"Selected year:" + selectedYear}</p>
+            {/* <p>{"Selected year:" + selectedYear}</p>
             <p>{"Selected Model:" + selectedModels}</p>
             <p>{"Selected Station:" + selectedStation}</p>
-            <p>{"Selected Display Model:" + displayModel}</p>
+            <p>{"Selected Display Model:" + displayModel}</p> */}
             
             {(selectedStationData.length > 0)?
                 <LinechartMultiple key={"lcmultiple"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} displayModel={displayModel}/>
