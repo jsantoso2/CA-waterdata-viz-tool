@@ -6,23 +6,27 @@ import { FormControl, NativeSelect, InputLabel } from '@material-ui/core';
 
 
 function Barchart(props) {
+    var window_width = window.innerWidth;
+    var window_height = window.innerHeight;
+
     const svgRefyAxis = useRef();
     const svgRef = useRef();
     const legendRef = useRef();
 
     // constants for svg properties
-    const height = 450;
-    const width = 900;
+    const height = window_height * 0.75;
+    const width = window_width * 0.85;
     const padding = 40;
 
     var color = ["blue", "orange"];
 
     // passed properties
-    var oneselectedStation = props.oneselectedStation;
+    var selectedStation = props.selectedStation
+    const [oneselectedStation, setOneSelectedStation] = useState(selectedStation[0]);
     var selectedModels = props.selectedModels; 
     var selectedYear = props.selectedYear;    // [1979, 2019];
-    var prediction = props.prediction; 
-    var groundTruth = props.groundTruth; 
+    var prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
+    var groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
 
     const [currentDispModel, setCurrentDispModel] = useState("Average");
 
@@ -196,7 +200,7 @@ function Barchart(props) {
             .join(
                 enter => enter.append("text").attr("x", (width-padding)/2).attr("y", height - 5).attr("font-size", "12px")
                             .attr("font-weight", 700).attr("class", "xaxislabel").text("Year"),
-                update => update.append("text").attr("x", (width-padding)/2).attr("y", height - 5).attr("font-size", "12px")
+                update => update.attr("x", (width-padding)/2).attr("y", height - 5).attr("font-size", "12px")
                             .attr("font-weight", 700).attr("class", "xaxislabel").text("Year"),
                 exit => exit.remove()
             ) 
@@ -206,13 +210,13 @@ function Barchart(props) {
             .join(
                 enter => enter.append("text").attr("text-anchor", "middle").attr("font-size", "12px").attr("transform", "translate("+ (8) +","+(height/3)+")rotate(-90)")
                             .attr("font-weight", 700).attr("class", "yaxislabel").text("Stream Flow"),
-                update => update.append("text").attr("text-anchor", "middle").attr("font-size", "12px").attr("transform", "translate("+ (8) +","+(height/3)+")rotate(-90)")
+                update => update.attr("text-anchor", "middle").attr("font-size", "12px").attr("transform", "translate("+ (8) +","+(height/3)+")rotate(-90)")
                             .attr("font-weight", 700).attr("class", "yaxislabel").text("Stream Flow"),
                 exit => exit.remove()
             ) 
 
             // create legend
-            var legenddata = ["actual", "prediction"];
+            var legenddata = ["Actual", "Prediction"];
             
             var legend = svglegend
                             .selectAll(".rectlegend")
@@ -250,29 +254,43 @@ function Barchart(props) {
     }, [oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, currentDispModel]);
 
 
-
     return (
-        <div style={{marginLeft: "20px"}}>  
-            <h3>Grouped Bar Chart</h3>
-            <FormControl style={{marginRight: "2rem", width: "200px"}}>
-                <InputLabel shrink>Model to Display: </InputLabel>
-                <NativeSelect onChange={(e) => setCurrentDispModel(e.target.value)}>
-                    <option value={"Average"} key={"Average"}>Average</option>
-                    {selectedModels.map(x => <option value={x} key={x}>{x}</option>)}
-                </NativeSelect>
-            </FormControl>
-            <div style={{display: "flex", alignItems: "center"}}>
-                <svg ref={svgRefyAxis} width={padding} height={height}>
-                    <g className="y-axis"></g>
-                </svg>
-                <svg ref={svgRef} width = {width} height = {height}>
-                        <g className="x-axis"></g>
-                </svg>
-                <svg ref={legendRef} width = {width / 5} height={height}>
-                    <text x="10" y="10" fontWeight="700">Legend</text>
-                    <g className="legendLinear"></g>
-                </svg>
+        <div>
+            {props.selectedStationData?
+            <div>
+                <div id="barchart_container" style={{display: "block", position: "relative", top: "-50px", visibility: "hidden"}} />
+                <div id="barchart">
+                    <div style={{backgroundColor: "#62a5e7", color: "white", height: "50px"}}>
+                            <h2 style={{marginTop: "10px", marginBottom: "10px", marginLeft: "20px"}}>BarChart for Yearly Streamflow Aggregation</h2>
+                    </div>  
+                    <FormControl style={{marginLeft: "20px", marginTop: "10px", marginBottom: "10px"}}>
+                        <InputLabel shrink>Display Station BarChart: </InputLabel>
+                        <NativeSelect onChange={(e) => setOneSelectedStation(e.target.value)} style={{width: "200px"}}>
+                            {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
+                        </NativeSelect>
+                    </FormControl>
+                    <FormControl style={{marginLeft: "20px", width: "200px", marginTop: "10px", marginBottom: "10px"}}>
+                        <InputLabel shrink>Model to Display: </InputLabel>
+                        <NativeSelect onChange={(e) => setCurrentDispModel(e.target.value)}>
+                            <option value={"Average"} key={"Average"}>Average</option>
+                            {selectedModels.map(x => <option value={x} key={x}>{x}</option>)}
+                        </NativeSelect>
+                    </FormControl>
+                    <div style={{display: "flex", alignItems: "center", marginLeft: "20px"}}>
+                        <svg ref={svgRefyAxis} width={padding} height={height}>
+                            <g className="y-axis"></g>
+                        </svg>
+                        <svg ref={svgRef} width = {width} height = {height}>
+                                <g className="x-axis"></g>
+                        </svg>
+                        <svg ref={legendRef} width = {padding * 2} height={height}>
+                            <text x="10" y="10" fontWeight="700">Legend</text>
+                            <g className="legendLinear"></g>
+                        </svg>
+                    </div>
+                </div>
             </div>
+            : null}
         </div>
     )
 };

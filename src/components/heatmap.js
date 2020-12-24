@@ -7,23 +7,28 @@ import { legendColor } from 'd3-svg-legend';
 
 function Heatmap(props) {
 
+    var window_width = window.innerWidth;
+    // var window_height = window.innerHeight;
+
     const svgRef = useRef();
     const legendRef = useRef();
     const breakdownRef = useRef();
     const breakdownlegendRef = useRef();
 
     // constants for svg properties
-    const height = 500;
-    const width = 500;
+    const height = window_width * 0.325;
+    const width = window_width * 0.325;
     const padding = 40;
 
     // passed properties
-    var oneselectedStation = props.oneselectedStation;
+    var selectedStation = props.selectedStation
+    const [oneselectedStation, setOneSelectedStation] = useState(selectedStation[0]);
+
     var selectedModels = props.selectedModels; 
     var selectedYear = props.selectedYear;    // [1979, 2019];
     //var selectedStationData = props.selectedStationData; //[station0: [pred, actual, staid], station1: [pred, actual, staid]]
-    var prediction = props.prediction; 
-    var groundTruth = props.groundTruth; 
+    var prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
+    var groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
 
     // model list + actual
     var selectOptions = ["Actual"];
@@ -227,7 +232,7 @@ function Heatmap(props) {
             
             var yScale = d3.scaleBand()
                             .domain(ydomain)
-                            .range([padding, height-padding]);
+                            .range([padding/2, height-padding]);
             
             var colorscale = d3.scaleLinear()
                                .domain([d3.min(matrixdata, function(d){ return Math.abs(d.value); }), d3.max(matrixdata, function(d){ return Math.abs(d.value); })])
@@ -379,8 +384,9 @@ function Heatmap(props) {
                     
                     // add breakdown legend
                     var legendLinearbd = legendColor()
-                                            .labelFormat(d3.format(".1f"))
-                                            .shapeWidth(30)
+                                            .labelFormat(d3.format(".2f"))
+                                            .shapeWidth(20)
+                                            .shapeHeight(20)
                                             .cells(10)
                                             .orient('vertical')
                                             .scale(colorscaleclick);
@@ -453,11 +459,12 @@ function Heatmap(props) {
             // legend
             var legendLinear = legendColor()
                 .labelFormat(d3.format(".0f"))
-                .shapeWidth(30)
-                .cells(20)
+                .shapeWidth(20)
+                .shapeHeight(20)
+                .cells(10)
                 .orient('vertical')
                 .scale(colorscale);
-              
+                                      
             legendsvg.select(".legendLinear")
                 .attr("transform", "translate(0," + (padding/2) + ")")
                 .call(legendLinear)
@@ -503,62 +510,77 @@ function Heatmap(props) {
         }
     }
 
-
     return (
-        <div style={{marginLeft: "20px"}}>
-            <div style={{display: "flex", alignItems: "center"}} >
-                <FormControl style={{marginRight: "2rem"}}>
-                    <InputLabel shrink>Aggregation: </InputLabel>
-                    <NativeSelect onChange={(e) => setAggregation(e.target.value)}>
-                        {aggregationdata.map(x => <option value={x} key={x}>{x}</option>)}
-                    </NativeSelect>
-                </FormControl>
-                <p style={{marginRight: "1rem"}}><b>XAxis: </b></p>
-                <FormControl>
-                    <InputLabel shrink>Model: </InputLabel>
-                    <NativeSelect onChange={(e) => handleSelectedX(e)}>
-                        {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
-                    </NativeSelect>
-                </FormControl>
-                <FormControl style={{marginRight: "2rem"}}>
-                    <InputLabel shrink>Year: </InputLabel>
-                    <NativeSelect onChange={(e) => setSelectedXYear(e.target.value)} value={selectedXYear}>
-                        {selectedXList.map(x => <option value={x} key={x}>{x}</option>)}
-                    </NativeSelect>
-                </FormControl>
-                <p style={{marginRight: "1rem"}}><b>YAxis: </b></p>
-                <FormControl>
-                    <InputLabel shrink>Model: </InputLabel>
-                    <NativeSelect onChange={(e) => handleSelectedY(e)}>
-                        {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
-                    </NativeSelect>
-                </FormControl>
-                <FormControl>
-                    <InputLabel shrink>Year: </InputLabel>
-                    <NativeSelect onChange={(e) => setSelectedYYear(e.target.value)} value={selectedYYear}>
-                        {selectedYList.map(x => <option value={x} key={x}>{x}</option>)}
-                    </NativeSelect>
-                </FormControl>
+        <div>
+            {props.selectedStationData?
+            <div>
+                <div id="heatmap_container" style={{display: "block", position: "relative", top: "-10px", visibility: "hidden"}} />
+                <div id="heatmap">
+                    <div style={{backgroundColor: "#62a5e7", color: "white", height: "50px"}}>
+                        <h2 style={{marginTop: "10px", marginBottom: "10px", marginLeft: "20px"}}>Heatmap for Observations</h2>
+                    </div> 
+                    <div style={{display: "flex", alignItems: "center"}} >
+                        <FormControl style={{marginLeft: "20px", marginTop: "10px", marginBottom: "10px"}}>
+                            <InputLabel shrink>Display Station BarChart: </InputLabel>
+                            <NativeSelect onChange={(e) => setOneSelectedStation(e.target.value)} style={{width: "200px"}}>
+                                {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                        <FormControl style={{marginRight: "2rem"}}>
+                            <InputLabel shrink>Aggregation: </InputLabel>
+                            <NativeSelect onChange={(e) => setAggregation(e.target.value)}>
+                                {aggregationdata.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                        <p style={{marginRight: "1rem"}}><b>XAxis: </b></p>
+                        <FormControl>
+                            <InputLabel shrink>Model: </InputLabel>
+                            <NativeSelect onChange={(e) => handleSelectedX(e)}>
+                                {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                        <FormControl style={{marginRight: "2rem"}}>
+                            <InputLabel shrink>Year: </InputLabel>
+                            <NativeSelect onChange={(e) => setSelectedXYear(e.target.value)} value={selectedXYear}>
+                                {selectedXList.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                        <p style={{marginRight: "1rem"}}><b>YAxis: </b></p>
+                        <FormControl>
+                            <InputLabel shrink>Model: </InputLabel>
+                            <NativeSelect onChange={(e) => handleSelectedY(e)}>
+                                {selectOptions.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                        <FormControl>
+                            <InputLabel shrink>Year: </InputLabel>
+                            <NativeSelect onChange={(e) => setSelectedYYear(e.target.value)} value={selectedYYear}>
+                                {selectedYList.map(x => <option value={x} key={x}>{x}</option>)}
+                            </NativeSelect>
+                        </FormControl>
+                    </div>
+                    <h3 style={{marginTop: "10px", marginLeft: "20px"}}><u>{"Heatmap for Station " + oneselectedStation}</u></h3>
+                    <p style={{marginLeft: "20px"}}>Click on box to view breakdown by day!</p>
+                    <div style={{display: "flex", alignItems: "center", marginLeft: "20px"}}>
+                        <svg ref={svgRef} width = {width} height = {height}>
+                            <g className="y-axis"></g>
+                            <g className="x-axis"></g>
+                        </svg>
+                        <svg ref={legendRef} width = {width / 5} height={height}>
+                            <text x="10" y="10" fontWeight="700">Legend</text>
+                            <g className="legendLinear"></g>
+                        </svg>
+                        <svg ref={breakdownRef} width={width} height = {height}>
+                            <g className="y-axis"></g>
+                            <g className="x-axis"></g>
+                        </svg>
+                        <svg ref={breakdownlegendRef} width={width / 5} height = {height}>
+                            <g className="legendLinear"></g>
+                        </svg>
+                    </div>
+                </div>
             </div>
-            <h3 style={{marginTop: "20px"}}>{"Heatmap for Station " + oneselectedStation}</h3>
-            <p>Click on box to view breakdown by day!</p>
-            <div style={{display: "flex", alignItems: "center"}}>
-                <svg ref={svgRef} width = {width} height = {height}>
-                    <g className="y-axis"></g>
-                    <g className="x-axis"></g>
-                </svg>
-                <svg ref={legendRef} width = {width / 5} height={height}>
-                    <text x="10" y="10" fontWeight="700">Legend</text>
-                    <g className="legendLinear"></g>
-                </svg>
-                <svg ref={breakdownRef} width={width} height = {height}>
-                    <g className="y-axis"></g>
-                    <g className="x-axis"></g>
-                </svg>
-                <svg ref={breakdownlegendRef} width={width / 5} height = {height}>
-                    <g className="legendLinear"></g>
-                </svg>
-            </div>
+            : null}
         </div>
     )
 }

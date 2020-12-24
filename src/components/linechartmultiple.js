@@ -2,10 +2,12 @@ import React, {useRef, useState, useEffect} from 'react';
 import * as d3 from 'd3';
 import usePrevious from './usePrevious';
 import { zoomTransform } from 'd3';
-import { Button, Slider } from '@material-ui/core';
-
+import { Button, Slider, Grid } from '@material-ui/core';
 
 function LinechartMultiple(props) {
+
+    //var window_height = window.innerHeight;
+    var window_width = window.innerWidth;
 
     const svgRef = useRef();
     const svgRefyAxis = useRef();
@@ -19,7 +21,7 @@ function LinechartMultiple(props) {
                 "black", "black", "black", "black", "black", "black", "black", "black", "black", "black",
                 "black", "black", "black", "black", "black", "black", "black", "black", "black", "black"];
 
-    // passed properties
+    // passed properties    
     var selectedStation = props.selectedStation;
     var selectedModels = props.selectedModels; 
     var selectedYear = props.selectedYear;    // [1979, 2019];
@@ -51,7 +53,7 @@ function LinechartMultiple(props) {
 
     // constants for svg properties
     const height = 400;
-    const width = 900;
+    const width = window_width * 0.6;
     const padding = 40;
     var formatTime = d3.timeFormat("%b %Y");
 
@@ -113,7 +115,7 @@ function LinechartMultiple(props) {
             const yScale = d3.scaleLinear()
                              //.domain([0, Math.max(d3.max(groundTruth, function(d){ return d.y; }), d3.max(prediction, function(d){ return d.yhat; }))])
                              .domain([0, Math.max(d3.max(tempgt), d3.max(temppred))])
-                             .range([height - 2.5*padding, padding]);
+                             .range([height - 2.5*padding, 0]);
             
             // change y axis for zoom
             if (currentZoomState){
@@ -408,11 +410,11 @@ function LinechartMultiple(props) {
 
                 const xScalebc = d3.scaleLinear()
                                    .domain([0, d3.max(horizbcdata, function(d){ return +d.values})])
-                                   .range([padding * 2.5, 8 * padding]);
+                                   .range([padding * 2.5, window_width * 0.25]);
 
                 const yScalebc = d3.scaleBand()
                                    .domain(horizbcdata.map(x => x.model))
-                                   .range([padding, height - 2.5 * padding]);
+                                   .range([padding, height - padding]);
 
                 // Define axes
                 var xAxisbc = d3.axisBottom()
@@ -462,21 +464,47 @@ function LinechartMultiple(props) {
                                             .attr("class", "horizbcbar").attr("fill", function(d, i){ return colormap[d.model]; }),
                             exit => exit.remove()
                         );
+                
+                // add text annotations
+                svghorizbc.select('#horizbcgroup').selectAll(".horizbcbartext")
+                .data(horizbcdata)
+                .join(
+                    enter => enter.append("text").attr("x", function(d){ return xScalebc(d.values)/2 + 1.25*padding} ).attr("y",function(d){ return yScalebc(d.model) + yScalebc.bandwidth()/2})
+                                    .text(function(d){ return d.values}).attr("fill", "white").style("font-size", "10px")
+                                    .attr("class", "horizbcbartext"),
+                    update => update.attr("x", function(d){ return xScalebc(d.values)/2  + 1.25*padding}).attr("y",function(d){ return yScalebc(d.model) + yScalebc.bandwidth()/2})
+                                    .text(function(d){ return d.values}).attr("fill", "white").style("font-size", "10px")
+                                    .attr("class", "horizbcbartext"),
+                    exit => exit.remove()
+                );
 
                 // Create axes
                 svghorizbc.select('#horizbcgroup').select(".x-axis")
-                    .attr("transform", "translate(0," + (height - 2.5 * padding) + ")")
+                    .attr("transform", "translate(0," + (height - padding) + ")")
                     .call(xAxisbc);
 
                 svghorizbc.select('#horizbcgroup').select(".y-axis")
                     .attr("transform", "translate(" + (padding * 2.5) + ",0)")
                     .call(yAxisbc);
+
+                // create title
+                svghorizbc.selectAll(".plottitle")
+                    .data([1])
+                    .join(
+                        enter => enter.append("text").attr("x", (window_width * 0.25 - padding * 2.5) /2).attr("y", 20).attr("text-anchor", "middle")
+                                    .attr("font-weight", 700).attr("class", "plottitle").text("Breakdown for " + formatDateTooltip(res.date))
+                                    .style("font-size", "18px").style("text-decoration", "underline"),
+                        update => update.attr("x", (window_width * 0.25 - padding * 2.5) /2).attr("y", 20).attr("text-anchor", "middle")
+                                    .attr("font-weight", 700).style("font-size", "18px").style("text-decoration", "underline").attr("class", "plottitle")
+                                    .text("Breakdown for " + formatDateTooltip(res.date)),
+                        exit => exit.remove()
+                    ) 
                 
                 
             });
-            svg.on("touchend mouseleave", () => {tooltip.call(callout, null);
-                                                 svghorizbc.selectAll('#horizbcgroup').remove();
-                                                });  
+            // svg.on("touchend mouseleave", () => {tooltip.call(callout, null);
+            //                                      svghorizbc.selectAll('#horizbcgroup').remove();
+            //                                     });  
             
 
             // Create axes
@@ -542,18 +570,18 @@ function LinechartMultiple(props) {
                 exit => exit.remove()
             );               
                 
-            // create title
-            svg.selectAll(".plottitle")
-                .data([1])
-                .join(
-                    enter => enter.append("text").attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
-                                .attr("font-weight", 700).attr("class", "plottitle").text("StreamFlow for Stations")
-                                .style("font-size", "18px").style("text-decoration", "underline"),
-                    update => update.attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
-                                .attr("font-weight", 700).style("font-size", "18px").style("text-decoration", "underline").attr("class", "plottitle")
-                                .text("StreamFlow for Stations"),
-                    exit => exit.remove()
-                ) 
+            // // create title
+            // svg.selectAll(".plottitle")
+            //     .data([1])
+            //     .join(
+            //         enter => enter.append("text").attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
+            //                     .attr("font-weight", 700).attr("class", "plottitle").text("StreamFlow for Stations")
+            //                     .style("font-size", "18px").style("text-decoration", "underline"),
+            //         update => update.attr("x", (width - 2*padding) /2).attr("y", 20).attr("text-anchor", "middle")
+            //                     .attr("font-weight", 700).style("font-size", "18px").style("text-decoration", "underline").attr("class", "plottitle")
+            //                     .text("StreamFlow for Stations"),
+            //         exit => exit.remove()
+            //     ) 
 
             ///////////// zoom on main chart
             zoomBehavior = d3.zoom()
@@ -780,53 +808,64 @@ function LinechartMultiple(props) {
 
     return (
         <div>
-            {props.selectedStationData? 
+            {props.selectedStationData?
                 <div>
-                    <div style={{backgroundColor: "#62a5e7", color: "white"}}>
-                        <h2 style={{margin: "10px"}}>LineChart for Predictions</h2>
+                <div id="linechartmultiple_container" style={{display: "block", position: "relative", top: "-50px", visibility: "hidden"}} />
+                <div id="linechartmultiple">
+                    <div style={{backgroundColor: "#62a5e7", color: "white", height: "50px"}}>
+                        <h2 style={{marginTop: "10px", marginBottom: "10px", marginLeft: "20px"}}>LineChart for Predictions</h2>
                     </div>
-                <div style={{margin: "20px"}}>
-                    <div style={{display: "flex", alignItems: "center"}}>
-                        <svg ref={svgRefyAxis} width={padding} height={height}>
-                            <g className="y-axis"></g>
-                        </svg>
-                        <svg ref={svgRef} width = {width} height = {height}>
-                            <defs>
-                                <clipPath>
-                                    <rect x={padding} y={padding} width={width - padding} height={height - padding}></rect>
-                                </clipPath>
-                            </defs>
-                            <g className="x-axis"></g>
-                            <g className="tooltip"></g>
-                        </svg>
-                        <svg ref={svgReflegend} width={padding * 3} height={height}>
-                        </svg>
-                        <svg ref={svgRefhorizbc} width={padding * 8} height={height}>
-                            <g id="#horizbcgroup">
-                                <g className="x-axis"></g>
+                    <div style={{marginLeft: "20px", marginRight: "20px", marginTop: "10px"}}>
+                        <div style={{display: "flex", alignItems: "center"}}>
+                            <svg ref={svgRefyAxis} width={padding} height={height}>
                                 <g className="y-axis"></g>
-                            </g>
-                        </svg>
-                    </div>
-                    <div style={{display: "flex", alignItems: "center", marginTop: "10px", marginBottom: "10px"}}>
-                        <p style={{marginLeft: "38.75px", fontWeight: "bold", marginTop: "10px", marginRight: "50px"}}>Drag to Brush and Filter Line Chart: </p>
-                        <Button size="small" color="secondary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetZoom()}>Reset Zoom Line Chart</Button>
-                        <Button size="small" color="primary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetBrush()}>Reset Brush</Button>
-                    </div>
-                    <svg ref={svgRefbrushChart} width={width} height={height/3} style={{marginLeft: "38.75px"}}>
-                        <g className="x-axis"></g>
-                        <g className="brush"></g>
-                    </svg>
-                    <div style={{marginTop: "10px", marginBottom: "10px"}}>
-                        <p style={{marginLeft: "38.75px", fontWeight: "bold", marginTop: "10px"}}>Drag Slider to filter by Year: </p>
-                        <br/>
-                        <Slider style={{marginLeft: "38.75px", width: "900px", height: "20px", marginTop: "20px"}} value={selectedYearView}
-                            aria-labelledby="discrete-slider"
-                            step={1} marks={true}
-                            min={selectedYear[0]} max={selectedYear.slice(-1)[0]}
-                            valueLabelDisplay="on"
-                            onChange={(e, v) => handleSelectedYearView(e, v)}
-                        />
+                            </svg>
+                            <svg ref={svgRef} width = {width} height = {height}>
+                                <defs>
+                                    <clipPath>
+                                        <rect x={padding} y={padding} width={width - padding} height={height - padding}></rect>
+                                    </clipPath>
+                                </defs>
+                                <g className="x-axis"></g>
+                                <g className="tooltip"></g>
+                            </svg>
+                            <svg ref={svgReflegend} width={padding * 3} height={height}>
+                            </svg>
+                            <svg ref={svgRefhorizbc} width={window_width * 0.25} height={height}>
+                                <g id="#horizbcgroup">
+                                    <g className="x-axis"></g>
+                                    <g className="y-axis"></g>
+                                </g>
+                            </svg>
+                        </div>
+                        <div style={{display: "flex", alignItems: "center", marginTop: "10px", marginBottom: "10px"}}>
+                            <p style={{marginLeft: "38.75px", fontWeight: "bold", marginTop: "10px", marginRight: "50px"}}>Drag to Brush and Filter Line Chart: </p>
+                            <Button size="small" color="secondary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetZoom()}>Reset Zoom Line Chart</Button>
+                            <Button size="small" color="primary" style={{marginLeft: "20px"}} variant="contained" onClick={() => handleResetBrush()}>Reset Brush</Button>
+                        </div>
+
+            
+                        <div style={{marginTop: "10px"}}>
+                            <Grid container spacing={0}>
+                                <Grid item xs={12} sm={12} md={8}>
+                                    <svg ref={svgRefbrushChart} width={width} height={height/3} style={{marginLeft: "38.75px"}}>
+                                        <g className="x-axis"></g>
+                                        <g className="brush"></g>
+                                    </svg>
+                                </Grid>
+                                <Grid item xs={12} sm={12} md={4}>
+                                    <p style={{fontWeight: "bold", marginTop: "10px"}}>Drag Slider to filter by Year: </p>
+                                    <br/>
+                                    <Slider style={{width: window_width * 0.30, height: "20px", marginTop: "20px"}} value={selectedYearView}
+                                        aria-labelledby="discrete-slider"
+                                        step={1} marks={true}
+                                        min={selectedYear[0]} max={selectedYear.slice(-1)[0]}
+                                        valueLabelDisplay="on"
+                                        onChange={(e, v) => handleSelectedYearView(e, v)}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </div>
                     </div>
                 </div>
                 </div>
