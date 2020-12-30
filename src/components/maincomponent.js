@@ -1,8 +1,5 @@
 import React from 'react';
 import Mainfilter from './mainfilter';
-// import Header from './header';
-// import Barchart from './barchart';
-// import LinechartMultiple from './linechartmultiple';
 
 import {BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom';
 
