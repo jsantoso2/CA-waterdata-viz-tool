@@ -6,7 +6,7 @@ import { Button, Slider, Grid } from '@material-ui/core';
 
 function LinechartMultiple(props) {
 
-    //var window_height = window.innerHeight;
+    var window_height = window.innerHeight;
     var window_width = window.innerWidth;
 
     const svgRef = useRef();
@@ -52,7 +52,7 @@ function LinechartMultiple(props) {
     }
 
     // constants for svg properties
-    const height = 400;
+    const height = window_height*0.57;
     const width = window_width * 0.6;
     const padding = 40;
     var formatTime = d3.timeFormat("%b %Y");

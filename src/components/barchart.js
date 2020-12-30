@@ -21,18 +21,31 @@ function Barchart(props) {
     var color = ["blue", "orange"];
 
     // passed properties
-    var selectedStation = props.selectedStation
-    const [oneselectedStation, setOneSelectedStation] = useState(selectedStation[0]);
+    var selectedStation = props.selectedStation;
+    const [oneselectedStation, setOneSelectedStation] = useState(props.selectedStation[0]);    
     var selectedModels = props.selectedModels; 
     var selectedYear = props.selectedYear;    // [1979, 2019];
-    var prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
-    var groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
+    // var prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
+    // var groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
+    var prediction;
+    var groundTruth;
+    if (props.selectedStationData.length > 1) {
+        prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
+        groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
+    } else {
+        prediction = props.selectedStationData[0][0];
+        groundTruth = props.selectedStationData[0][1];
+    }
 
     const [currentDispModel, setCurrentDispModel] = useState("Average");
 
 
     // intial load
     useEffect(() => {
+        if (props.selectedStationData.length == 1) {
+            setOneSelectedStation(selectedStation[0]);
+        }
+
         // d3 code
         const svgyaxis = d3.select(svgRefyAxis.current);
         const svg = d3.select(svgRef.current);
@@ -238,6 +251,8 @@ function Barchart(props) {
             );               
                 
             // create title
+            svg.selectAll(".plottitle").remove();
+
             svg.selectAll(".plottitle")
                 .data([1])
                 .join(
@@ -251,7 +266,7 @@ function Barchart(props) {
                 ); 
         }
 
-    }, [oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, currentDispModel]);
+    }, [selectedStation, oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, currentDispModel]);
 
 
     return (

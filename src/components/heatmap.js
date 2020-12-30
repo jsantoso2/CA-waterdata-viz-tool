@@ -27,8 +27,16 @@ function Heatmap(props) {
     var selectedModels = props.selectedModels; 
     var selectedYear = props.selectedYear;    // [1979, 2019];
     //var selectedStationData = props.selectedStationData; //[station0: [pred, actual, staid], station1: [pred, actual, staid]]
-    var prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
-    var groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
+    var prediction;
+    var groundTruth;
+    if (props.selectedStationData.length > 1) {
+        prediction = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][0];
+        groundTruth = props.selectedStationData.filter(x => +x[2] === +oneselectedStation)[0][1];
+    } else {
+        prediction = props.selectedStationData[0][0];
+        groundTruth = props.selectedStationData[0][1];
+    }
+
 
     // model list + actual
     var selectOptions = ["Actual"];
@@ -85,6 +93,9 @@ function Heatmap(props) {
 
 
     useEffect(() => {
+        if (props.selectedStationData.length == 1) {
+            setOneSelectedStation(selectedStation[0]);
+        }
         // d3 code
         const svg = d3.select(svgRef.current);
         const legendsvg = d3.select(legendRef.current);
@@ -470,7 +481,7 @@ function Heatmap(props) {
                 .call(legendLinear)
         }
 
-    }, [oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, selectedXYear, selectedYYear, aggregation]);
+    }, [selectedStation, oneselectedStation, selectedModels, selectedYear, groundTruth, prediction, selectedXYear, selectedYYear, aggregation]);
    
 
 

@@ -85,8 +85,8 @@ function Mainfilter() {
     const [hoverUrbanProps, setHoverUrbanProps] = useState([]);
     const [hoverContractorProps, setContractorProps] = useState([]);
 
-    const [currInteractiveLayer, setCurrInteractiveLayer] = useState(["counties"]);
-    const [currInteractiveOptions, setCurrInteractiveOptions] = useState(['Counties', 'Service Area', 'Urban Area', 'Watershed']);
+    const [currInteractiveLayer, setCurrInteractiveLayer] = useState([]);
+    const [currInteractiveOptions, setCurrInteractiveOptions] = useState(['None', 'Counties', 'Service Area', 'Urban Area', 'Watershed']);
 
 
     // load selected station data
@@ -94,7 +94,7 @@ function Mainfilter() {
         // if click same marker do unclick
         if (selectedStation.includes(currStation)){
             unclickMarker(currStation);
-        } else if (selectedStation.length >= 3){
+        } else if (selectedStation.length >= 2){
             setOpenDialog(true);
         } else {
             // here do operations for clicks
@@ -578,6 +578,8 @@ function Mainfilter() {
                                 setCurrInteractiveLayer(["service"]);
                             } else if (d.target.value === 'Urban Area'){
                                 setCurrInteractiveLayer(["urban"]);
+                            } else if (d.target.value === 'None'){
+                                setCurrInteractiveLayer([]);
                             } else {
                                 setCurrInteractiveLayer(["ws1", "ws2", "ws3", "ws4"]);
                             }
@@ -887,7 +889,7 @@ function Mainfilter() {
             
             {/* ########## Seleted too much station dialog box############### */}
             <Dialog open={openDialog} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
-                <DialogTitle>{"Selected More than 3 Stations!"}</DialogTitle>
+                <DialogTitle>{"Selected More than 2 Stations!"}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>Please unclick one station first before clicking another one!</DialogContentText>
                 </DialogContent>
