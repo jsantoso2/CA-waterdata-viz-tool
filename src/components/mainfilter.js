@@ -6,6 +6,9 @@ import Heatmap from './heatmap';
 import Barchart from './barchart';
 import Header from './header';
 import LineChartContractors from './linechartcontractors';
+import LayoutMatricesRegular from './layoutmatricesregular';
+import LayoutMeanMajority from './layoutmatricesmeanmajority';
+
 
 // import styles and Material UI
 import { Grid, Checkbox, FormControlLabel, Button, FormControl, Select, InputLabel, NativeSelect, Slider, Typography, Input,
@@ -344,9 +347,6 @@ function Mainfilter() {
             }
         );
 
-        // add geoJSON WSBoundaries
-
-
         // listener for reset map with r key
         const rkeylistener = e => {
             if(e.key === 'r'){ resetMap(); }
@@ -363,7 +363,6 @@ function Mainfilter() {
         setShowPopup(true);
         sethoverStationProps(dataprops);
     }
-
 
     // function to reset map to original position and clear selected stateion
     const resetMap = () => {
@@ -998,6 +997,10 @@ function Mainfilter() {
                     <Barchart key={"bc"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData}/>
                     <br/>
                     <Heatmap key={"hm"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData}/>
+                    <br/>
+                    <LayoutMatricesRegular key={"matricesregular"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} />
+                    <br/>
+                    {/* <LayoutMeanMajority key={"matricesmaj"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} /> */}
                 </div>
             : null}
             

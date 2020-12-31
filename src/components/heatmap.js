@@ -93,7 +93,7 @@ function Heatmap(props) {
 
 
     useEffect(() => {
-        if (props.selectedStationData.length == 1) {
+        if (props.selectedStationData.length === 1) {
             setOneSelectedStation(selectedStation[0]);
         }
         // d3 code
@@ -290,7 +290,6 @@ function Heatmap(props) {
                     d.xarr.forEach((x, i) => {
                         d.yarr.forEach((y, i2) => {
                             matrixdataclick.push({ix: i, iy: i2, valx: x.date, valy: y.date, value: x.y - y.y});
-        
                         })
                     }); 
 

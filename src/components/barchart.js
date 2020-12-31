@@ -42,7 +42,7 @@ function Barchart(props) {
 
     // intial load
     useEffect(() => {
-        if (props.selectedStationData.length == 1) {
+        if (props.selectedStationData.length === 1) {
             setOneSelectedStation(selectedStation[0]);
         }
 
