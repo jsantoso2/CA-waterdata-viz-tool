@@ -7,7 +7,7 @@ import Barchart from './barchart';
 import Header from './header';
 import LineChartContractors from './linechartcontractors';
 import LayoutMatricesRegular from './layoutmatricesregular';
-import LayoutMeanMajority from './layoutmatricesmeanmajority';
+// import LayoutMeanMajority from './layoutmatricesmeanmajority';
 
 
 // import styles and Material UI
@@ -160,7 +160,6 @@ function Mainfilter() {
                             appendneeded = false;
                         }
                     }
-
                     
                     // if need to append
                     if (appendneeded){
@@ -175,7 +174,7 @@ function Mainfilter() {
                         // get unique elements of years from actual file and prediction file
                         var yearsListpred = read_files[0].map(x => x.date.getFullYear()); // get all years from pred file
                         var yearListactual = read_files[1].map(x => x.date.getFullYear()); // get all years from actual file
-
+                        
                         var yearsList = [...new Set([...allYears, ...yearsListpred, ...yearListactual])]; // get unique elements
                         yearsList = Array.from(yearsList).sort();
 
@@ -184,7 +183,7 @@ function Mainfilter() {
 
                         // set year as first element
                         setSelectedYear([yearsList[0], yearsList.slice(-1)[0]]);
-        
+
                         // get unique elements of models from prediction file
                         var modelsList = read_files[0].map(x => x.model);  // get all models
                         modelsList = [...new Set([...allModels, ...modelsList])]; // get unique elements
