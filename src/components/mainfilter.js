@@ -984,21 +984,12 @@ function Mainfilter() {
 
             {(selectedStationData.length > 0)?
                 <div>
-                    {/* <FormControl style={{marginLeft: "20px", marginBottom: "20px"}}>
-                        <InputLabel shrink>Display Station HeatMap + BarChart: </InputLabel>
-                        <NativeSelect onChange={(e) => setSelectedStationHM(e.target.value)} style={{width: "300px"}}>
-                            {selectedStation.map(x => <option value={x} key={x}>{x}</option>)}
-                        </NativeSelect>
-                    </FormControl> 
-                    prediction={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][0]} groundTruth={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][1]}
-                    prediction={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][0]} groundTruth={selectedStationData.filter(x => +x[2] === +selectedStationHM)[0][1]}
-                    */}
                     <Barchart key={"bc"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData}/>
                     <br/>
                     <Heatmap key={"hm"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData}/>
                     <br/>
-                    <LayoutMatricesRegular key={"matricesregular"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} />
-                    <br/>
+                    {/* <LayoutMatricesRegular key={"matricesregular"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} />
+                    <br/> */}
                     {/* <LayoutMeanMajority key={"matricesmaj"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} /> */}
                 </div>
             : null}
