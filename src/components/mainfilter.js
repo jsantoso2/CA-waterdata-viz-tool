@@ -6,7 +6,7 @@ import Heatmap from './heatmap';
 import Barchart from './barchart';
 import Header from './header';
 import LineChartContractors from './linechartcontractors';
-import LayoutMatricesRegular from './layoutmatricesregular';
+// import LayoutMatricesRegular from './layoutmatricesregular';
 // import LayoutMeanMajority from './layoutmatricesmeanmajority';
 
 
@@ -687,7 +687,7 @@ function Mainfilter() {
                             {powerplants.map(function(d){
                                 if (powerCheckBox){
                                     return <Marker key={d.Plant_ID} latitude={+d.latitude} longitude={+d.longitude}>
-                                                <button style={{background: "none", border: "none", cursor: "pointer"}}
+                                                <button style={{background: "none", border: "none", cursor: "pointer", transform: `translate(${-1.5*SIZE}px,${-1.5*SIZE}px)`}}
                                                     onMouseOut = {(e) => {setShowPopup(true); setHoverPowerProps([]);}}
                                                     onMouseOver = {(e) => {e.preventDefault(); setShowPopup(true); setHoverPowerProps([{lat: +d.latitude, long: +d.longitude, name: d.Name, id: d.Plant_ID, MW: +d.MW}]); }}
                                                 >
@@ -702,7 +702,7 @@ function Mainfilter() {
                             {contractors.map(function(d){
                                 if (contractorCheckBox){
                                     return <Marker key={d.ID} latitude={+d.LAT} longitude={+d.LONG}>
-                                                <button style={{background: "none", border: "none", cursor: "pointer"}}
+                                                <button style={{background: "none", border: "none", cursor: "pointer", transform: `translate(${-SIZE}px,${-SIZE}px)`}}
                                                      onMouseOut = {(e) => {setShowPopup(true); setContractorProps([]);}}
                                                      onMouseOver = {(e) => {e.preventDefault(); setShowPopup(true); setContractorProps([{lat: +d.LAT, long: +d.LONG, name: d.Contractor, historical: [+d.Total_2009, +d.Total_2010, +d.Total_2011, +d.Total_2012, +d.Total_2013, +d.Total_2014, +d.Total_2015, +d.Total_2016, +d.Total_2017, +d.Total_2018]}]); }}
                                                 >
@@ -732,17 +732,22 @@ function Mainfilter() {
                                                             onMouseOut = {(e) => {setShowPopup(true); setSwpProps([]);}}
                                                             onMouseOver = {(e) => {e.preventDefault(); setShowPopup(true); setSwpProps([{lat: +d.geometry.coordinates[1], long: +d.geometry.coordinates[0], name: d.properties.name, type: d.properties.type, vol: +d.properties.vol}]); }}
                                                         >   
-                                                        <img style={{height: "30px", width: "15px"}} alt="pin" src="https://a.tiles.mapbox.com/v4/marker/pin-m-water+7e7e7e@2x.png?access_token=pk.eyJ1IjoiZ2l0aHViIiwiYSI6ImNqaHcxdnVhZDE1Z20za2w2bXo2MGlpMjYifQ.440aOf-0gSggvf319ukLzA" />
+                                                            <img style={{height: "30px", width: "15px"}} alt="pin" src="https://a.tiles.mapbox.com/v4/marker/pin-m-water+7e7e7e@2x.png?access_token=pk.eyJ1IjoiZ2l0aHViIiwiYSI6ImNqaHcxdnVhZDE1Z20za2w2bXo2MGlpMjYifQ.440aOf-0gSggvf319ukLzA" />
                                                         </button>
                                                     </Marker>
                                         } else {
                                             return <Marker key={"swppath" + i} latitude={d.geometry.coordinates[1]} longitude={d.geometry.coordinates[0]}>
-                                                        <img style={{height: "30px", width: "15px"}} alt="pin" src="https://a.tiles.mapbox.com/v4/marker/pin-m-dam+7e7e7e@2x.png?access_token=pk.eyJ1IjoiZ2l0aHViIiwiYSI6ImNqaHcxdnVhZDE1Z20za2w2bXo2MGlpMjYifQ.440aOf-0gSggvf319ukLzA" />
+                                                        <button style={{background: "none", border: "none", cursor: "pointer", transform: `translate(${-SIZE}px,${-SIZE}px)`}}
+                                                            onMouseOut = {(e) => {setShowPopup(true); setSwpProps([]);}}
+                                                            onMouseOver = {(e) => {e.preventDefault(); setShowPopup(true); setSwpProps([{lat: +d.geometry.coordinates[1], long: +d.geometry.coordinates[0], name: d.properties.name, type: "Dam/Pumps", vol: -100}]); }}
+                                                        >  
+                                                            <img style={{height: "30px", width: "15px"}} alt="pin" src="https://a.tiles.mapbox.com/v4/marker/pin-m-dam+7e7e7e@2x.png?access_token=pk.eyJ1IjoiZ2l0aHViIiwiYSI6ImNqaHcxdnVhZDE1Z20za2w2bXo2MGlpMjYifQ.440aOf-0gSggvf319ukLzA" />
+                                                        </button>
                                                     </Marker> 
                                         }  
                                     } else if (d.geometry.type === "LineString"){
                                         return <Source id={"swppath" + i} type="geojson" data={d}>
-                                                    <Layer id={"swppath" + i} type="line" layout={{'line-join': 'round', 'line-cap': 'round'}} paint={{'line-color': 'blue', 'line-width': 4}}></Layer>
+                                                    <Layer id={"swppath" + i} type="line" layout={{'line-join': 'round', 'line-cap': 'round'}} paint={{'line-color': '#00ffec', 'line-width': 4}}></Layer>
                                                 </Source>
                                     }
                                 } else {
@@ -879,18 +884,32 @@ function Mainfilter() {
 
                             {(showPopup) && (hoverSwpProps.length === 1)  ? (
                                 (typeof hoverSwpProps[0].vol !== 'undefined') ? (
-                                    <Popup
-                                        latitude={hoverSwpProps[0].lat}
-                                        longitude={hoverSwpProps[0].long}
-                                        dynamicPosition={false}
-                                        closeButton={false}
-                                    >
-                                        <div style={{fontSize: "10px"}}>
-                                            <h3>{"Name: " + hoverSwpProps[0].name}</h3>
-                                            <p>{"Type: " + hoverSwpProps[0].type}</p>
-                                            <p>{"Volume: " + numberWithCommas(hoverSwpProps[0].vol)}</p>
-                                        </div>
-                                    </Popup>
+                                    (typeof hoverSwpProps[0].vol > 0) ? (
+                                        <Popup
+                                            latitude={hoverSwpProps[0].lat}
+                                            longitude={hoverSwpProps[0].long}
+                                            dynamicPosition={false}
+                                            closeButton={false}
+                                        >
+                                            <div style={{fontSize: "10px"}}>
+                                                <h3>{"Name: " + hoverSwpProps[0].name}</h3>
+                                                <p>{"Type: " + hoverSwpProps[0].type}</p>
+                                                <p>{"Volume: " + numberWithCommas(hoverSwpProps[0].vol)}</p>
+                                            </div>
+                                        </Popup>
+                                    ) : (
+                                        <Popup
+                                            latitude={hoverSwpProps[0].lat}
+                                            longitude={hoverSwpProps[0].long}
+                                            dynamicPosition={false}
+                                            closeButton={false}
+                                        >
+                                            <div style={{fontSize: "10px"}}>
+                                                <h3>{"Name: " + hoverSwpProps[0].name}</h3>
+                                                <p>{"Type: " + hoverSwpProps[0].type}</p>
+                                            </div>
+                                        </Popup> 
+                                    )
                                 ) : (
                                     <Popup
                                         latitude={hoverSwpProps[0].lat}
