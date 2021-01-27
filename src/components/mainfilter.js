@@ -7,7 +7,7 @@ import Barchart from './barchart';
 import Header from './header';
 import LineChartContractors from './linechartcontractors';
 // import LayoutMatricesRegular from './layoutmatricesregular';
-// import LayoutMeanMajority from './layoutmatricesmeanmajority';
+// import LayoutMeanMajority from './layoutmatricesmeanmajority'; THIS IS STILL BROKEN NOT WORKING
 
 
 // import styles and Material UI
@@ -38,7 +38,7 @@ function Mainfilter() {
     const ICON = `M20.2,15.7L20.2,15.7c1.1-1.6,1.8-3.6,1.8-5.7c0-5.6-4.5-10-10-10S2,4.5,2,10c0,2,0.6,3.9,1.6,5.4c0,0.1,0.1,0.2,0.2,0.3
     c0,0,0.1,0.1,0.1,0.2c0.2,0.3,0.4,0.6,0.7,0.9c2.6,3.1,7.4,7.6,7.4,7.6s4.8-4.5,7.4-7.5c0.2-0.3,0.5-0.6,0.7-0.9
     C20.1,15.8,20.2,15.8,20.2,15.7z`;
-    const SIZE = 7;
+    const SIZE = 8;
 
     var window_height = window.innerHeight;
     var window_width = window.innerWidth;
@@ -53,13 +53,14 @@ function Mainfilter() {
     const [selectedStation, setSelectedStation] = useState([]);  
     const [refStation, setRefStation] = useState(true);
     const [nonrefStation, setNonRefStation] = useState(true);
+    const [unavaildata, setUnavailData] = useState(false);
     const [wsCheckBox, setWSCheckBox] = useState(true);
     const [countiesCheckBox, setCountiesCheckBox] = useState(true);
     const [serviceCheckBox, setServiceCheckBox] = useState(true);
-    const [powerCheckBox, setPowerCheckBox] = useState(true);
-    const [urbanCheckBox, setUrbanCheckBox] = useState(true);
+    const [powerCheckBox, setPowerCheckBox] = useState(false);
+    const [urbanCheckBox, setUrbanCheckBox] = useState(false);
     const [contractorCheckBox, setContractorCheckBox] = useState(true);
-    const [swpCheckBox, setSwpCheckBox] = useState(true);
+    const [swpCheckBox, setSwpCheckBox] = useState(false);
 
     const [selectedYear, setSelectedYear] = useState([0,0]);
     const [selectedModels, setSelectedModels] = useState([]);
@@ -195,7 +196,6 @@ function Mainfilter() {
 
                 }
             ).catch(function(e) {
-                console.log(e);
                 // catch any no files
                 console.error('File ../data/prediction'+currStation+'.csv not found!');
                 //clearCanvas();
@@ -544,6 +544,12 @@ function Mainfilter() {
                     } label="Service Area" />
                 <FormControlLabel
                     control={
+                        <Checkbox id="contractorCheckBox" checked={contractorCheckBox} name="ContractorCheck"
+                            onClick={() => setContractorCheckBox(!contractorCheckBox)}
+                            color="primary" label="Contractors" size="small"/>
+                    } label="Contractors" />
+                <FormControlLabel
+                    control={
                         <Checkbox id="powerCheckBox" checked={powerCheckBox} name="PowerCheck"
                             onClick={() => setPowerCheckBox(!powerCheckBox)}
                             color="primary" label="Power Plant" size="small"/>
@@ -561,12 +567,7 @@ function Mainfilter() {
                             }} 
                             color="primary" label="Urban Area" size="small"/>
                     } label="Urban Area" />
-                <FormControlLabel
-                    control={
-                        <Checkbox id="contractorCheckBox" checked={contractorCheckBox} name="ContractorCheck"
-                            onClick={() => setContractorCheckBox(!contractorCheckBox)}
-                            color="primary" label="Contractors" size="small"/>
-                    } label="Contractors" />
+      
                 <FormControlLabel
                     control={
                         <Checkbox id="swpCheckBox" checked={swpCheckBox} name="SWPCheck"
@@ -594,6 +595,12 @@ function Mainfilter() {
                             {currInteractiveOptions.map(x => <option value={x} key={x}>{x}</option>)}
                         </NativeSelect>
                     </FormControl>
+                <FormControlLabel
+                    control={
+                        <Checkbox id="unavailCheckBox" checked={unavaildata} name="Unavail Data"
+                            onClick={() => setUnavailData(!unavaildata)}
+                            color="primary" label="Show Stations with Unavailable Data" size="small"/>
+                    } label="Show Stations with Unavailable Data" />
                 <p style={{marginLeft: "10px", fontWeight: "bold"}}>{"Selected Station: " + selectedStation}</p>
 
             </div>
@@ -607,37 +614,6 @@ function Mainfilter() {
                             onClick={handleClickMapFeatures}
                             interactiveLayerIds={currInteractiveLayer}
                         >
-                            {stationdata.map(function(d){
-                                if (selectedStation.includes(d.STAID)){
-                                    return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
-                                            <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'yellow', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
-                                                onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
-                                                onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
-                                            >
-                                                <path d={ICON} />
-                                            </svg>
-                                            </Marker>)
-                                } else if(d.CLASS === 'Ref'){
-                                    return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
-                                            <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'blue', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
-                                                onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
-                                                onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
-                                            >
-                                                <path d={ICON} />
-                                            </svg>
-                                            </Marker>)
-                                } else{
-                                    return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
-                                            <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'red', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
-                                                onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
-                                                onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
-                                            >
-                                                <path d={ICON} />
-                                            </svg>
-                                            </Marker>)
-                                }
-                            })}
-
                             {(typeof cacounties  !== "undefined")?
                                 <Source id="counties" type="geojson" data={cacounties}>
                                    <Layer id="counties" type="fill" paint={{"fill-color": {
@@ -652,10 +628,116 @@ function Mainfilter() {
                                                 [10000000, '#CB4335'],
                                                 [15000000, '#B03A2E']
                                             ]
-                                        }, "fill-opacity": countiesCheckBox?0.6:0, "fill-outline-color": "black"}}>
+                                        }, "fill-opacity": countiesCheckBox?0.5:0, "fill-outline-color": "black"}}>
                                     </Layer>
                                 </Source>
                             : null}
+
+                            {(typeof ws1 !== "undefined")? 
+                                <Source id="ws1" type="geojson" data={ws1}>
+                                    <Layer id="ws1" type="fill" paint={{"fill-color": "#ff71ce", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
+                                </Source>
+                            : null}
+                            {(typeof ws2 !== "undefined")? 
+                                <Source id="ws2" type="geojson" data={ws2}>
+                                    <Layer id="ws2" type="fill" paint={{"fill-color": "#05ffa1", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
+                                </Source>
+                            : null}
+                            {(typeof ws3 !== "undefined")? 
+                                <Source id="ws3" type="geojson" data={ws3}>
+                                    <Layer id="ws3" type="fill" paint={{"fill-color": "#b967ff", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
+                                </Source>
+                            : null}
+                             {(typeof ws4 !== "undefined")? 
+                                <Source id="ws4" type="geojson" data={ws4}>
+                                    <Layer id="ws4" type="fill" paint={{"fill-color": "#fffb96", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
+                                </Source>
+                            : null}
+
+                            {/*################### Dots for stations ##################### */}
+                            {stationdata.map(function(d){
+                                if (selectedStation.includes(d.STAID)){
+                                    return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                            <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'yellow', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                            >
+                                                <path d={ICON} />
+                                            </svg>
+                                            </Marker>)
+                                } else if(d.CLASS === 'Ref'){
+                                    // check if the checkbox is checked which means display all
+                                    if (unavaildata === true){
+                                        if (d.data_avail === '1'){
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'blue', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        } else {
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: '#000000', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        }
+                                    } else {
+                                        if (d.data_avail === '1'){
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'blue', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        }
+                                    }
+                                } else if(d.CLASS == 'Non-ref'){
+                                    // check if the checkbox is checked which means display all
+                                    if (unavaildata === true){
+                                        // if data avail                                    
+                                        if (d.data_avail === '1'){
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'orange', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        } else {
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 12 12" style={{cursor: 'pointer', fill: '#000000', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        }
+                                    } else {
+                                        // if data avail                                    
+                                        if (d.data_avail === '1'){
+                                            return (<Marker key={d.STAID} latitude={+d.LAT_GAGE} longitude={+d.LNG_GAGE}>
+                                                <svg height={SIZE} viewBox="0 0 24 24" style={{cursor: 'pointer', fill: 'orange', stroke: 'none', transform: `translate(${-SIZE / 2}px,${-SIZE}px)`}}
+                                                    onClick={(e) => {e.preventDefault(); loadFiltersData(d.STAID)}}  onMouseOut = {(e) => {setShowPopup(false); sethoverStationProps([]);}}
+                                                    onMouseOver = {(e) => {e.preventDefault(); handlePopup([{lat: +d.LAT_GAGE, long: +d.LNG_GAGE, name: d.STANAME, id: d.STAID, statype: d.CLASS}]); }}
+                                                >
+                                                    <path d={ICON} />
+                                                </svg>
+                                                </Marker>)
+                                        }
+                                    }
+                                }
+                            })}
+  
 
                             {(typeof urbanarea  !== "undefined")?
                                 <Source id="urban" type="geojson" data={urbanarea}>
@@ -679,7 +761,7 @@ function Mainfilter() {
                             {(typeof servicearea  !== "undefined")?
                                 <Source id="service" type="geojson" data={servicearea}>
                                    <Layer id="service" type="fill" paint={{"fill-color": ["string", ["get", "color"]],
-                                    "fill-opacity": serviceCheckBox?0.9:0, "fill-outline-color": "black"}}>
+                                    "fill-opacity": serviceCheckBox?0.5:0, "fill-outline-color": "black"}}>
                                     </Layer>
                                 </Source>
                             : null}
@@ -756,28 +838,7 @@ function Mainfilter() {
                             })}
 
 
-                            {(typeof ws1 !== "undefined")? 
-                                <Source id="ws1" type="geojson" data={ws1}>
-                                    <Layer id="ws1" type="fill" paint={{"fill-color": "#f598be", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
-                                </Source>
-                            : null}
-                            {(typeof ws2 !== "undefined")? 
-                                <Source id="ws2" type="geojson" data={ws2}>
-                                    <Layer id="ws2" type="fill" paint={{"fill-color": "#a1f2d0", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
-                                </Source>
-                            : null}
-                            {(typeof ws3 !== "undefined")? 
-                                <Source id="ws3" type="geojson" data={ws3}>
-                                    <Layer id="ws3" type="fill" paint={{"fill-color": "#e2b1f2", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
-                                </Source>
-                            : null}
-                             {(typeof ws4 !== "undefined")? 
-                                <Source id="ws4" type="geojson" data={ws4}>
-                                    <Layer id="ws4" type="fill" paint={{"fill-color": "#d67ad0", "fill-opacity": wsCheckBox?0.6:0, "fill-outline-color": "black"}}></Layer>
-                                </Source>
-                            : null}
-
-                
+           
 
                             {(showPopup) && (hoverStationProps.length === 1) ? ( 
                                 <Popup
