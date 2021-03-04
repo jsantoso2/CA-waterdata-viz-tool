@@ -58,7 +58,7 @@ Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/
 - Interaction: tooltip on hover, dynamically changing axis and aggregation, click on box to display another heatmap with breakdown by day. 
 
 4. Matrix
-Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/matrix.JPG)
+Markup : ![picture alt](https://github.com/jsantoso2/CA-waterdata-viz-tool/blob/main/screenshots/Matrix.JPG)
 - Original Code done by Dr. Jose
 - Other file was not working (layoutmatricesmeanmajority)
 
