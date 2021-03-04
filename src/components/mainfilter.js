@@ -6,7 +6,7 @@ import Heatmap from './heatmap';
 import Barchart from './barchart';
 import Header from './header';
 import LineChartContractors from './linechartcontractors';
-// import LayoutMatricesRegular from './layoutmatricesregular';
+import LayoutMatricesRegular from './layoutmatricesregular';
 // import LayoutMeanMajority from './layoutmatricesmeanmajority'; THIS IS STILL BROKEN NOT WORKING
 
 
@@ -1068,8 +1068,8 @@ function Mainfilter() {
                     <br/>
                     <Heatmap key={"hm"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData}/>
                     <br/>
-                    {/* <LayoutMatricesRegular key={"matricesregular"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} />
-                    <br/> */}
+                    <LayoutMatricesRegular key={"matricesregular"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} />
+                    <br/>
                     {/* <LayoutMeanMajority key={"matricesmaj"} selectedStation={selectedStation} selectedModels={selectedModels} selectedYear={selectedYear} selectedStationData={selectedStationData} /> */}
                 </div>
             : null}
